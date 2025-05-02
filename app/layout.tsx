@@ -19,7 +19,7 @@ export default function RootLayout({
         className="bg-white text-neutral-900 antialiased font-sans"
       >
         <Header />
-        <main className="flex-1 pt-20">{children}</main>
+        <main className="flex-1">{children}</main>
         <Footer />
       </body>
     </html>
