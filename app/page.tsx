@@ -6,6 +6,8 @@ import ImageGallery from "./components/homepage/ImageGallery";
 import Customers from "./components/homepage/Customers";
 import Jumbotron from "./components/homepage/Jumbotron";
 import Head from "next/head";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 // const materialsImages = [
 //   {
@@ -28,6 +30,7 @@ import Head from "next/head";
 export default function Home() {
   return (
     <>
+      <Header />
       <Head>
         <title>Sotta Souvenir - Pusat Souvenir Logam Yogyakarta</title>
         <meta
@@ -71,6 +74,7 @@ export default function Home() {
         <CustomerExp />
         <Customers />
       </div>
+      <Footer />
     </>
   );
 }

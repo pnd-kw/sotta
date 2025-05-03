@@ -93,7 +93,11 @@ export default function ImageGallery() {
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-50 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-50 transition-opacity duration-300">
+                  <h3 className="h-full flex items-center justify-center text-xl font-bold text-white capitalize text-center px-2">
+                    {item.name.toLowerCase()}
+                  </h3>
+                </div>
               </div>
             ))}
           </div>

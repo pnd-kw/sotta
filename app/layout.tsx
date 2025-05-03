@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+// import Header from "./components/Header";
+// import Footer from "./components/Footer";
 
 export const metadata: Metadata = {
   title: "Sotta Souvenir",
@@ -18,9 +18,9 @@ export default function RootLayout({
       <body
         className="bg-white text-neutral-900 antialiased font-sans"
       >
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1">{children}</main>
-        <Footer />
+        {/* <Footer /> */}
       </body>
     </html>
   );
