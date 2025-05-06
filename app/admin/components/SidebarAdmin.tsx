@@ -2,8 +2,8 @@
 
 import { useMenu } from "@/context/MenuContext";
 import { JSX, useState } from "react";
-import { FaImages } from "react-icons/fa";
-import { MdDashboard, MdExpandLess, MdExpandMore } from "react-icons/md";
+import { FaImages, FaStar } from "react-icons/fa";
+import { MdDashboard, MdExpandLess, MdExpandMore, MdPerson } from "react-icons/md";
 
 type MenuItem = {
   title: string;
@@ -24,13 +24,21 @@ const sideMenus: MenuItem[] = [
     title: "Gallery",
     icon: <FaImages />,
   },
+  {
+    title: "Customer experiences",
+    icon: <FaStar />
+  },
+  {
+    title: "User management",
+    icon: <MdPerson />
+  }
 ];
 
 export default function SidebarAdmin({
   openDrawer = false,
 }: SidebarAdminProps) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
-  const { setSelectedMenu } = useMenu();
+  const { selectedMenu, setSelectedMenu } = useMenu();
 
   function handleSelectMenu(menu: MenuItem) {
     if (menu.children) {
@@ -54,14 +62,16 @@ export default function SidebarAdmin({
       }`}
       style={{ willChange: "transform" }}
     >
-      <div className="px-6 pt-4">
+      <div className="px-6 pt-20">
         <span className="text-2xl text-white font-bold">Logo</span>
       </div>
       <div className="py-10">
         {sideMenus.map((menu, index) => (
           <div key={index}>
             <button
-              className="flex items-center justify-between w-full px-4 py-2 hover:bg-stone-900"
+              className={`flex items-center justify-between w-full px-4 py-2 hover:bg-[#996515] ${
+                selectedMenu === menu.title ? "bg-[#996515]" : ""
+              }`}
               onClick={() => handleSelectMenu(menu)}
             >
               <span className="flex items-center gap-2 text-sm text-white">

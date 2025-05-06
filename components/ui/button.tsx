@@ -13,9 +13,14 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         full: "w-full bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         whiteRedText: "bg-white text-red-500 shadow-xs hover:bg-stone-100",
+        transRedText:
+          "bg-transparent text-red-500 shadow-xs hover:bg-stone-100",
         whiteAmberText: "bg-white text-amber-500 shadow-xs hover:bg-stone-100",
+        transAmberText:
+          "bg-transparent text-amber-500 shadow-xs hover:bg-stone-100",
         green:
           "bg-green-700 text-primary-foreground shadow-xs hover:bg-green-600",
+        gray: "bg-gray-300 text-primary-foreground shadow-xs hover:bg-gray-200 rounded-full",
         // red: "bg-red-800 text-primary-foreground shadow-xs hover:bg-red-700",
         // amber:
         //   "bg-amber-700 text-primary-foreground shadow-xs hover:bg-amber-600",
@@ -26,7 +31,7 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+          "hover:bg-transparent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
