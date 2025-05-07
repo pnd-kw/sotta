@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,10 +7,11 @@ import { z } from "zod";
 import CustomFileInput from "../CustomFileInput";
 
 const galleryFormSchema = z.object({
-  title: z.string().min(1, "Image title wajib diisi"),
-  description: z.string().min(1, "Deskripsi image wajib diisi"),
+  name: z.string().min(1, "Image name wajib diisi"),
+  alt: z.string().min(1, "Image alt wajib diisi"),
+  caption: z.string().min(1, "Caption image wajib diisi"),
   category: z.string().min(1, "Image category wajib diisi"),
-  metadata: z.string().min(1, "Metadata image wajib diisi"),
+  tags: z.array(z.string()).optional(),
   image: z
     .any()
     .refine((file) => file?.length === 1, "Gambar wajib diunggah")
@@ -31,16 +33,35 @@ export default function GalleryForm() {
     handleSubmit,
     formState: { errors },
     setValue,
+    watch,
   } = useForm<GalleryForm>({
     resolver: zodResolver(galleryFormSchema),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [tagsInput, setTagsInput] = useState("");
+
+  const nameValue = watch("name");
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (nameValue) {
+        setValue("alt", nameValue.toLowerCase(), { shouldValidate: true });
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nameValue]);
+
   const onSubmit = (data: GalleryForm) => {
     const formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("description", data.description);
+    formData.append("name", data.name);
+    formData.append("alt", data.alt);
+    formData.append("caption", data.caption);
     formData.append("category", data.category);
-    formData.append("metadata", data.metadata);
+    formData.append("tags", JSON.stringify(data.tags || []));
     formData.append("image", data.image[0]);
 
     console.log("send data to api", data);
@@ -48,73 +69,82 @@ export default function GalleryForm() {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-4 py-2">
+      <form
+        onSubmit={handleSubmit(onSubmit, (err) => {
+          console.log("validation error", err);
+        })}
+        className="space-y-4 px-4 py-2"
+      >
         <div>
-          <label htmlFor="title" className="text-sm font-medium text-stone-900">
-            Image title <span className="text-red-500">*</span>
+          <label htmlFor="name" className="text-sm font-medium text-stone-900">
+            Image name <span className="text-red-500">*</span>
           </label>
           <Input
-            {...register("title")}
+            {...register("name")}
             placeholder="Judul gambar ..."
-            aria-invalid={!!errors.title}
+            aria-invalid={!!errors.name}
           />
-          {errors.title && (
+          {errors.name && (
             <p className="pt-2 px-2 text-left text-xs text-red-500">
-              {errors.title.message}
+              {errors.name.message}
+            </p>
+          )}
+        </div>
+        <div>
+          <label htmlFor="alt" className="text-sm font-medium text-stone-900">
+            Image alt <span className="text-red-500">*</span>
+          </label>
+          <Input
+            {...register("alt")}
+            placeholder="Image alt ..."
+            aria-invalid={!!errors.alt}
+          />
+          {errors.alt && (
+            <p className="pt-2 px-2 text-left text-xs text-red-500">
+              {errors.alt.message}
             </p>
           )}
         </div>
         <div>
           <label
-            htmlFor="description"
+            htmlFor="category"
             className="text-sm font-medium text-stone-900"
           >
-            Image description <span className="text-red-500">*</span>
+            Image category <span className="text-red-500">*</span>
           </label>
           <Input
-            textarea
-            {...register("description")}
-            placeholder="Deskripsi gambar adalah ..."
-            maxLength={250}
-            aria-invalid={!!errors.description}
+            {...register("category")}
+            placeholder="Logam"
+            aria-invalid={!!errors.category}
           />
-          <div
-            className={`flex ${
-              errors.description ? "justify-between" : "justify-end"
-            }`}
-          >
-            {errors.description && (
-              <p className="pt-2 px-2 text-left text-xs text-red-500">
-                {errors.description.message}
-              </p>
-            )}
-            <span className="pt-2 text-xs text-stone-500 italic">
-              Maximum of 250 characters
-            </span>
-          </div>
+          {errors.category && (
+            <p className="pt-2 px-2 text-left text-xs text-red-500">
+              {errors.category.message}
+            </p>
+          )}
         </div>
         <div>
           <label
-            htmlFor="metadata"
+            htmlFor="caption"
             className="text-sm font-medium text-stone-900"
           >
-            Image metadata <span className="text-red-500">*</span>
+            Image caption <span className="text-red-500">*</span>
           </label>
           <Input
             textarea
-            {...register("metadata")}
-            placeholder="#kerajinan #souvenir #kuningan #perak..."
+            {...register("caption")}
+            placeholder="Caption gambar adalah ..."
             maxLength={250}
-            aria-invalid={!!errors.metadata}
+            aria-invalid={!!errors.caption}
           />
           <div
             className={`flex ${
-              errors.metadata ? "justify-between" : "justify-end"
+              errors.caption ? "justify-between" : "justify-end"
             }`}
           >
-            {errors.metadata && (
+            {errors.caption && (
               <p className="pt-2 px-2 text-left text-xs text-red-500">
-                {errors.metadata.message}
+                {errors.caption.message}
               </p>
             )}
             <span className="pt-2 text-xs text-stone-500 italic">
@@ -123,20 +153,43 @@ export default function GalleryForm() {
           </div>
         </div>
         <div>
-          {/* <label htmlFor="image" className="text-sm font-medium text-stone-900">
-            Upload an image <span className="text-red-500">*</span>
+          <label htmlFor="tags" className="text-sm font-medium text-stone-900">
+            Image tags <span className="text-red-500"></span>
           </label>
           <Input
-            type="file"
-            accept="image/*"
-            {...register("image")}
-            aria-invalid={!!errors.image}
+            textarea
+            // {...register("tags")}
+            onChange={(e) => {
+              const rawValue = e.target.value;
+              setTagsInput(rawValue);
+
+              const tagArray = rawValue
+                .split(/[ ,]+/)
+                .map((tag) => tag.trim())
+                .filter((tag) => tag !== "")
+                .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`));
+              setValue("tags", tagArray, { shouldValidate: true });
+            }}
+            placeholder="#kerajinan #souvenir #kuningan #perak..."
+            maxLength={250}
+            aria-invalid={!!errors.tags}
           />
-          {typeof errors.image?.message === "string" && (
-            <p className="pt-2 px-2 text-left text-xs text-red-500">
-              {errors.image.message}
-            </p>
-          )} */}
+          <div
+            className={`flex ${
+              errors.tags ? "justify-between" : "justify-end"
+            }`}
+          >
+            {errors.tags && (
+              <p className="pt-2 px-2 text-left text-xs text-red-500">
+                {errors.tags.message}
+              </p>
+            )}
+            <span className="pt-2 text-xs text-stone-500 italic">
+              Maximum of 250 characters
+            </span>
+          </div>
+        </div>
+        <div>
           <CustomFileInput
             onChange={(e) => setValue("image", e.target.files)}
             error={

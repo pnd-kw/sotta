@@ -46,7 +46,7 @@ export default function Users() {
     console.log("handleDelete");
   }
   return (
-    <div className="w-full bg-white px-4 py-4 rounded-lg">
+    <div className="w-full h-[100vh] bg-white px-4 py-4 rounded-lg">
       <h3 className="text-xl md:text-2xl font-bold mb-2">User Management</h3>
       <div className="md:max-w-[80vw] mx-auto px-4 py-2 mb-4 rounded-lg shadow-sm">
         <div className="flex items-center justify-between py-4">
