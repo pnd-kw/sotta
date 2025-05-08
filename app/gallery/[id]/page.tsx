@@ -2,10 +2,25 @@ import GalleryDetail from "@/app/components/GalleryDetail";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-const galleryImage = [
+type GalleryImage = {
+  id: string;
+  name: string;
+  published: boolean;
+  url: string;
+  alt: string;
+  caption: string;
+  tags: string[];
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const galleryImage: GalleryImage[] = [
   {
     id: "img_001",
     name: "tabernakel",
+    published: false,
     url: "/assets/tabernakel.svg",
     alt: "Tabernakel",
     caption: "Tabernakel dari bahan kuningan",
@@ -18,6 +33,7 @@ const galleryImage = [
   {
     id: "img_002",
     name: "bejana kuningan",
+    published: true,
     url: "/assets/bejana_kuningan.svg",
     alt: "Bejana kuningan",
     caption: "Bejana dari kuningan",
@@ -30,6 +46,7 @@ const galleryImage = [
   {
     id: "img_003",
     name: "plakat souvenir",
+    published: true,
     url: "/assets/plakat_souvenir.svg",
     alt: "Plakat souvenir",
     caption: "Plakat untuk souvenir",
@@ -42,6 +59,7 @@ const galleryImage = [
   {
     id: "img_004",
     name: "kalung etnik",
+    published: true,
     url: "/assets/kalung_etnik.svg",
     alt: "Kalung etnik",
     caption: "Kalung etnik dari kuningan",
@@ -54,6 +72,7 @@ const galleryImage = [
   {
     id: "img_005",
     name: "lencana kerajaan",
+    published: true,
     url: "/assets/lencana_kerajaan.svg",
     alt: "Lencana kerajaan",
     caption: "Lencana kerajaan kuno",
@@ -66,6 +85,7 @@ const galleryImage = [
   {
     id: "img_006",
     name: "plakat ikan",
+    published: true,
     url: "/assets/plakat_ikan.svg",
     alt: "Plakat ikan",
     caption: "Plakat ikan terbang",
@@ -78,6 +98,7 @@ const galleryImage = [
   {
     id: "img_007",
     name: "taber",
+    published: true,
     url: "/assets/tabernakel.svg",
     alt: "Taber",
     caption: "Taber kuningan",
@@ -90,6 +111,7 @@ const galleryImage = [
   {
     id: "img_008",
     name: "bejana",
+    published: true,
     url: "/assets/bejana_kuningan.svg",
     alt: "Bejana",
     caption: "Bejana kuning",
@@ -102,6 +124,7 @@ const galleryImage = [
   {
     id: "img_009",
     name: "plakat",
+    published: true,
     url: "/assets/plakat_souvenir.svg",
     alt: "Plakat",
     caption: "Plakat perak",
@@ -114,6 +137,7 @@ const galleryImage = [
   {
     id: "img_010",
     name: "kalung",
+    published: true,
     url: "/assets/kalung_etnik.svg",
     alt: "Kalung",
     caption: "Kalung unik",
@@ -126,6 +150,7 @@ const galleryImage = [
   {
     id: "img_011",
     name: "lencana",
+    published: true,
     url: "/assets/lencana_kerajaan.svg",
     alt: "Lencana",
     caption: "Lencana indah",
@@ -138,6 +163,7 @@ const galleryImage = [
   {
     id: "img_012",
     name: "ikan",
+    published: true,
     url: "/assets/plakat_ikan.svg",
     alt: "Ikan",
     caption: "Ikan laut",
@@ -155,13 +181,15 @@ type Props = {
 };
 
 export async function generateStaticParams() {
-  return galleryImage.map((item) => ({
-    id: item.id,
-  }));
+  return galleryImage
+    .filter((img) => img.published)
+    .map((img) => ({ id: img.id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const image = galleryImage.find((img) => img.id === params.id);
+  const image = galleryImage.find(
+    (img) => img.id === params.id && img.published
+  );
   if (!image) return {};
 
   const siteUrl = "https://example.com";
@@ -191,21 +219,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function GalleryDetailPage({ params, searchParams }: Props) {
-  const { id } = params;
-  const isPreview = searchParams?.preview === "true";
+  const allowPreview = searchParams?.preview?.toLowerCase() === "true";
 
-  const data = galleryImage.find((item) => item.id === id);
+  const image = galleryImage.find((img) =>
+    allowPreview ? img.id === params.id : img.id === params.id && img.published
+  );
 
-  if (!data) return notFound();
+  if (!image) return notFound();
 
   return (
     <>
-      {isPreview && (
+      {image && (
         <div className="bg-yellow-100 text-yellow-900 p-2 text-sm mb-4 rounded">
           Ini adalah tampilan <strong>preview</strong>
         </div>
       )}
-      <GalleryDetail data={data} />
+      <GalleryDetail data={image} />
     </>
   );
 }

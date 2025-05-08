@@ -11,9 +11,21 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { FaPlus } from "react-icons/fa";
 import UserForm from "../components/forms/UserForm";
 import { MdDelete, MdEdit } from "react-icons/md";
+import { useState } from "react";
 
+type User = {
+  id_user: string;
+  username: string;
+  nama: string;
+  phone_number: string;
+  roles: string;
+  password: string;
+  password_confirm: string;
+  created_at: string;
+  updated_at: string;
+};
 
-const users = [
+const users: User[] = [
   {
     id_user: "xvk765ia",
     username: "john",
@@ -39,12 +51,17 @@ const users = [
 ];
 
 export default function Users() {
-  function handleEdit() {
-    console.log("handle edit");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  function handleEdit(user_id: string) {
+    console.log("handle edit", user_id);
+    setSelectedUserId(user_id);
   }
+
   function handleDelete() {
     console.log("handleDelete");
   }
+
   return (
     <div className="w-full h-[100vh] bg-white px-4 py-4 rounded-lg">
       <h3 className="text-xl md:text-2xl font-bold mb-2">User Management</h3>
@@ -73,22 +90,21 @@ export default function Users() {
               <div className="flex items-center px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
                 Tambah User
               </div>
-              <UserForm />
+              <UserForm userId={selectedUserId} />
             </DialogContent>
           </Dialog>
         </div>
       </div>
       <div className="md:max-w-[80vw] mx-auto px-4 py-2 mb-4 rounded-lg shadow-sm">
         <Table
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          data={users.map(({ id_user, ...rest }) => rest)}
+          data={users}
           listIconButton={[
             {
               name: "edit",
               value: true,
               icon: <MdEdit />,
               variant: "transAmberText",
-              onClick: handleEdit,
+              onClick: (row: User) => handleEdit(row.id_user),
             },
             {
               name: "delete",

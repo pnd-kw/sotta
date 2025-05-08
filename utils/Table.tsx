@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { MdPushPin } from "react-icons/md";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 
-interface IconButton {
+interface IconButton<T> {
   name: string;
   value: boolean;
   icon: React.ReactNode;
@@ -31,7 +31,7 @@ interface IconButton {
     | "secondary"
     | "ghost"
     | "link";
-  onClick: (row: Record<string, unknown>) => void;
+  onClick: (row: T) => void;
 }
 
 interface PinnedColumn {
@@ -44,7 +44,7 @@ interface TableProps<T> {
   defaultSortBy?: string;
   defaultPinned?: PinnedColumn;
   perPage?: number;
-  listIconButton?: IconButton[];
+  listIconButton?: IconButton<T>[];
   customWidths?: Record<string, string>;
 }
 
@@ -92,22 +92,6 @@ function getComparator<T extends Record<string, unknown>>(
     if (aStr > bStr) return order === "desc" ? -1 : 1;
     return 0;
   };
-}
-
-function getActionColMinWidth(activeIconButtons: IconButton[] = []): string {
-  const length = activeIconButtons.length;
-
-  const widths: Record<number, string> = {
-    7: "min-w-[16rem]",
-    6: "min-w-[14rem]",
-    5: "min-w-[12rem]",
-    4: "min-w-[10rem]",
-    3: "min-w-[8rem]",
-    2: "min-w-[6rem]",
-    1: "min-w-[4.5rem]",
-  };
-
-  return widths[length] || "min-w-[4rem]";
 }
 
 export function Table<T extends Record<string, unknown>>({
@@ -168,9 +152,25 @@ export function Table<T extends Record<string, unknown>>({
   }, [data, order, orderBy, page, rowsPerPage]);
 
   const activeIconButtons = useMemo(
-    () => listIconButton.filter((btn: IconButton) => btn.value === true),
+    () => listIconButton.filter((btn: IconButton<T>) => btn.value === true),
     [listIconButton]
   );
+
+  function getActionColMinWidth(activeIconButtons: IconButton<T>[] = []): string {
+    const length = activeIconButtons.length;
+  
+    const widths: Record<number, string> = {
+      7: "min-w-[16rem]",
+      6: "min-w-[14rem]",
+      5: "min-w-[12rem]",
+      4: "min-w-[10rem]",
+      3: "min-w-[8rem]",
+      2: "min-w-[6rem]",
+      1: "min-w-[4.5rem]",
+    };
+  
+    return widths[length] || "min-w-[4rem]";
+  }
 
   const togglePinColumn = useCallback(
     (column: string) => {
@@ -242,7 +242,7 @@ export function Table<T extends Record<string, unknown>>({
               <th className="bg-[#85582c] text-white border-r border-stone-300 sticky top-0 px-2 py-2">
                 <span className="font-normal">{formatHeader("no")}</span>
               </th>
-              {listIconButton.some((btn: IconButton) => btn.value === true) ? (
+              {listIconButton.some((btn: IconButton<T>) => btn.value === true) ? (
                 <th
                   className={`bg-[#85582c] sticky top-0 px-2 py-2 border-r border-stone-300
                     ${getActionColMinWidth(activeIconButtons)}`}
@@ -336,19 +336,19 @@ export function Table<T extends Record<string, unknown>>({
                   >
                     {index + 1}
                   </td>
-                  {listIconButton.some((btn: IconButton) => btn.value === true) ? (
+                  {listIconButton.some((btn: IconButton<T>) => btn.value === true) ? (
                     <td
                       className="border border-stone-300 whitespace-normal break-words 
                     max-w-[10rem] px-2 py-2"
                     >
                       <div className="flex items-center justify-center">
-                        {listIconButton.map((btn: IconButton) =>
+                        {listIconButton.map((btn: IconButton<T>) =>
                           btn.value ? (
                             <Button
                               key={btn.name}
                               variant={btn.variant}
                               size="icon"
-                              onClick={() => {}}
+                              onClick={() => btn.onClick(item)}
                             >
                               {btn.icon}
                             </Button>

@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import CustomFileInput from "../CustomFileInput";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const galleryFormSchema = z.object({
   name: z.string().min(1, "Image name wajib diisi"),
@@ -198,6 +199,20 @@ export default function GalleryForm() {
                 : undefined
             }
           />
+        </div>
+        <div className="flex space-x-2">
+          <Checkbox id="publish" />
+          <div className="grid gap-1.5 leading-none">
+            <label
+              htmlFor="publish"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Publish
+            </label>
+            <p className="text-sm text-muted-foreground">
+              Anda tidak bisa melihat preview dan akan langsung tampil di halaman pengunjung.
+            </p>
+          </div>
         </div>
         <div className="flex justify-end">
           <Button variant="green">Simpan</Button>

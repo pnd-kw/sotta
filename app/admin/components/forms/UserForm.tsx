@@ -1,8 +1,38 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+interface UserFormProps {
+  userId: string | null;
+}
+
+const users = [
+  {
+    id_user: "xvk765ia",
+    username: "john",
+    nama: "john doe",
+    phone_number: "085524311234",
+    roles: "admin",
+    password: "admin123",
+    password_confirm: "admin123",
+    created_at: "2025-02-10T10:14:40.000456Z",
+    updated_at: "2025-02-10T10:14:40.000456Z",
+  },
+  {
+    id_user: "myc285pl",
+    username: "susie",
+    nama: "susan",
+    phone_number: "085578900987",
+    roles: "account officer",
+    password: "account123",
+    password_confirm: "account123",
+    created_at: "2025-02-10T10:14:41.000456Z",
+    updated_at: "2025-02-10T10:14:41.000456Z",
+  },
+];
 
 const userSchema = z
   .object({
@@ -23,13 +53,28 @@ const userSchema = z
 
 type UserForm = z.infer<typeof userSchema>;
 
-export default function UserForm() {
+export default function UserForm({ userId }: UserFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<UserForm>({
     resolver: zodResolver(userSchema),
+  });
+
+  useEffect(() => {
+    if (userId) {
+      const userData = users.find((item) => item.id_user === userId);
+      if (userData) {
+        setValue("username", userData.username);
+        setValue("nama", userData.nama);
+        setValue("phone_number", userData.phone_number);
+        setValue("roles", userData.roles);
+        setValue("password", userData.password);
+        setValue("pass_confirm", userData.password_confirm);
+      }
+    }
   });
 
   const onSubmit = (data: UserForm) => {
