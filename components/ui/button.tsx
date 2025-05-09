@@ -20,6 +20,7 @@ const buttonVariants = cva(
           "bg-transparent text-amber-500 shadow-xs hover:bg-stone-100",
         green:
           "bg-green-700 text-primary-foreground shadow-xs hover:bg-green-600",
+        red: "bg-red-500 text-primary-foreground shadow-xs hover:bg-red-400",
         gray: "bg-gray-300 text-primary-foreground shadow-xs hover:bg-gray-200 rounded-full",
         // red: "bg-red-800 text-primary-foreground shadow-xs hover:bg-red-700",
         // amber:

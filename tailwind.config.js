@@ -1,14 +1,15 @@
 /** @type {import('tailwindcss').Config} */
-export const content = [
-  "./app/**/*.{js,ts,jsx,tsx}",
-  "./components/**/*.{js,ts,jsx,tsx}",
-];
-export const theme = {
-  extend: {
-    fontFamily: {
-      serif: ["Georgia", "serif"],
-      mono: ["Courier New", "Courier", "monospace"],
+const config = {
+  content: ["./app/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ["var(--font-josefin-sans)", "sans-serif"],
+        mono: ["var(--font-nova-mono)", "monospace"],
+      },
     },
   },
+  plugins: [],
 };
-export const plugins = [];
+
+export default config;

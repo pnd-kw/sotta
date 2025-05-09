@@ -201,7 +201,7 @@ export default function Gallery() {
 
   return (
     <div className="w-full px-4 py-4 bg-white rounded-lg">
-      <h3 className="text-xl md:text-2xl font-bold mb-2">Gallery</h3>
+      <h3 className="text-xl md:text-2xl font-bold mb-2 font-sans">Gallery</h3>
       <div className="md:max-w-[80vw] mx-auto px-4 mb-4 rounded-lg shadow-sm">
         <div className="flex items-center justify-between py-4">
           <input
@@ -320,7 +320,7 @@ export default function Gallery() {
                   <MdDelete />
                 </Button>
               </div>
-              <div className={`absolute bottom-1 right-1 px-4 py-2 rounded-md text-xs ${item.published ? "bg-green-600 text-white" : "bg-gray-100"}`}>
+              <div className={`absolute bottom-1 right-1 px-4 py-2 rounded-md text-xs font-bold ${item.published ? "bg-green-600 text-white" : "bg-gray-100"}`}>
                 {item.published ? "Published" : "Draft"}
               </div>
             </div>

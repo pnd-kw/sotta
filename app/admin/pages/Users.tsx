@@ -11,7 +11,11 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { FaPlus } from "react-icons/fa";
 import UserForm from "../components/forms/UserForm";
 import { MdDelete, MdEdit } from "react-icons/md";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import BouncingImage from "@/utils/BouncingImage";
+import ImageAlertDialog, {
+  ImageAlertDialogHandle,
+} from "@/utils/ImageAlertDialog";
 
 type User = {
   id_user: string;
@@ -52,6 +56,7 @@ const users: User[] = [
 
 export default function Users() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const dialog = useRef<ImageAlertDialogHandle>(null);
 
   function handleEdit(user_id: string) {
     console.log("handle edit", user_id);
@@ -60,72 +65,90 @@ export default function Users() {
 
   function handleDelete() {
     console.log("handleDelete");
+    dialog.current?.openDialog();
   }
 
   return (
-    <div className="w-full h-[100vh] bg-white px-4 py-4 rounded-lg">
-      <h3 className="text-xl md:text-2xl font-bold mb-2">User Management</h3>
-      <div className="md:max-w-[80vw] mx-auto px-4 py-2 mb-4 rounded-lg shadow-sm">
-        <div className="flex items-center justify-between py-4">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-1/2 border border-stone-300 px-2 py-2 rounded-md"
-          />
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="green">
-                <FaPlus />
-                Tambah
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <VisuallyHidden>
-                <DialogTitle></DialogTitle>
-              </VisuallyHidden>
-              <VisuallyHidden>
-                <DialogDescription>Form untuk menambah user</DialogDescription>
-              </VisuallyHidden>
+    <>
+      <div className="w-full h-[100vh] bg-white px-4 py-4 rounded-lg">
+        <h3 className="text-xl md:text-2xl font-bold mb-2">User Management</h3>
+        <div className="md:max-w-[80vw] mx-auto px-4 py-2 mb-4 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between py-4">
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-1/2 border border-stone-300 px-2 py-2 rounded-md"
+            />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="green">
+                  <FaPlus />
+                  Tambah
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <VisuallyHidden>
+                  <DialogTitle></DialogTitle>
+                </VisuallyHidden>
+                <VisuallyHidden>
+                  <DialogDescription>
+                    Form untuk menambah user
+                  </DialogDescription>
+                </VisuallyHidden>
 
-              <div className="flex items-center px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
-                Tambah User
-              </div>
-              <UserForm userId={selectedUserId} />
-            </DialogContent>
-          </Dialog>
+                <div className="flex items-center px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
+                  Tambah User
+                </div>
+                <UserForm userId={selectedUserId} />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+        <div className="md:max-w-[80vw] mx-auto px-4 py-2 mb-4 rounded-lg shadow-sm">
+          <Table
+            data={users}
+            listIconButton={[
+              {
+                name: "edit",
+                value: true,
+                icon: <MdEdit />,
+                variant: "transAmberText",
+                onClick: (row: User) => handleEdit(row.id_user),
+              },
+              {
+                name: "delete",
+                value: true,
+                icon: <MdDelete />,
+                variant: "transRedText",
+                onClick: handleDelete,
+              },
+            ]}
+            customWidths={{
+              username: "min-w-[14rem]",
+              nama: "min-w-[14rem]",
+              phone_number: "min-w-[10rem]",
+              roles: "min-w-[10rem]",
+              password: "min-w-[10rem]",
+              password_confirm: "min-w-[10rem]",
+              created_at: "min-w-[10rem]",
+              updated_at: "min-w-[10rem]",
+            }}
+          />
         </div>
       </div>
-      <div className="md:max-w-[80vw] mx-auto px-4 py-2 mb-4 rounded-lg shadow-sm">
-        <Table
-          data={users}
-          listIconButton={[
-            {
-              name: "edit",
-              value: true,
-              icon: <MdEdit />,
-              variant: "transAmberText",
-              onClick: (row: User) => handleEdit(row.id_user),
-            },
-            {
-              name: "delete",
-              value: true,
-              icon: <MdDelete />,
-              variant: "transRedText",
-              onClick: handleDelete,
-            },
-          ]}
-          customWidths={{
-            username: "min-w-[14rem]",
-            nama: "min-w-[14rem]",
-            phone_number: "min-w-[10rem]",
-            roles: "min-w-[10rem]",
-            password: "min-w-[10rem]",
-            password_confirm: "min-w-[10rem]",
-            created_at: "min-w-[10rem]",
-            updated_at: "min-w-[10rem]",
-          }}
-        />
-      </div>
-    </div>
+      <ImageAlertDialog
+        ref={dialog}
+        alertImage={
+          <BouncingImage
+            image="/assets/exclamation-red-icon.svg"
+            alt="Delete warning image"
+            width={60}
+            height={60}
+          />
+        }
+        title="Peringatan"
+        content="Apakah anda ingin menghapus?"
+      />
+    </>
   );
 }
