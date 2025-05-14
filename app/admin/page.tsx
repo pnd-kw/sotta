@@ -1,9 +1,14 @@
-"use client";
-
+import { cookies } from "next/headers";
 import ContentPanel from "./components/ContentPanel";
-// import Login from "./pages/Login";
+import { redirect } from "next/navigation";
 
-export default function AdminPage() {
-  // return <Login />;
+export default async function AdminPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token");
+
+  if (!token) {
+    redirect("/login");
+  }
+
   return <ContentPanel />;
 }

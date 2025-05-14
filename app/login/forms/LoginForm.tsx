@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/authStore";
@@ -30,7 +32,7 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginForm) => {
     try {
       await login(data.username, data.password);
-      router.push("/dashboard");
+      router.push("/admin");
     } catch (err) {
       setErrorMsg("username atau password salah");
     }

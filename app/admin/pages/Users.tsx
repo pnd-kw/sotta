@@ -4,7 +4,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogTitle,
-  DialogTrigger,
+  // DialogTrigger,
 } from "@/components/ui/dialog";
 import { Table } from "@/utils/Table";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -17,10 +17,14 @@ import ImageAlertDialog, {
   ImageAlertDialogHandle,
 } from "@/utils/ImageAlertDialog";
 
+type Gender = "laki-laki" | "perempuan";
+
 type User = {
   id_user: string;
   username: string;
   nama: string;
+  gender: Gender;
+  avatar: string;
   phone_number: string;
   roles: string;
   password: string;
@@ -31,9 +35,24 @@ type User = {
 
 const users: User[] = [
   {
+    id_user: "manutd20",
+    username: "alfian_persie",
+    nama: "Eva Alfian",
+    gender: "laki-laki",
+    avatar: "/assets/avatar-1.svg",
+    phone_number: "085774801409",
+    roles: "superadmin",
+    password: "rahasia",
+    password_confirm: "rahasia",
+    created_at: "2025-05-13T10:09:23.000456Z",
+    updated_at: "2025-05-13T10:09:23.000456Z",
+  },
+  {
     id_user: "xvk765ia",
     username: "john",
     nama: "john doe",
+    gender: "laki-laki",
+    avatar: "/assets/avatar-2.svg",
     phone_number: "085524311234",
     roles: "admin",
     password: "admin123",
@@ -45,6 +64,8 @@ const users: User[] = [
     id_user: "myc285pl",
     username: "susie",
     nama: "susan",
+    gender: "perempuan",
+    avatar: "/assets/avatar-3.svg",
     phone_number: "085578900987",
     roles: "account officer",
     password: "account123",
@@ -56,15 +77,18 @@ const users: User[] = [
 
 export default function Users() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState<boolean>(false);
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
-  function handleEdit(user_id: string) {
-    console.log("handle edit", user_id);
-    setSelectedUserId(user_id);
+  function handleEdit(id_user: string) {
+    console.log("handle edit", id_user);
+    setSelectedUserId(id_user);
+    setIsFormDialogOpen(true);
   }
 
-  function handleDelete() {
+  function handleDelete(id_user: string) {
     console.log("handleDelete");
+    setSelectedUserId(id_user);
     dialog.current?.openDialog();
   }
 
@@ -79,13 +103,30 @@ export default function Users() {
               placeholder="Search..."
               className="w-1/2 border border-stone-300 px-2 py-2 rounded-md"
             />
-            <Dialog>
-              <DialogTrigger asChild>
+            <Button
+              variant="green"
+              onClick={() => {
+                setSelectedUserId(null);
+                setIsFormDialogOpen(true);
+              }}
+            >
+              <FaPlus /> Tambah
+            </Button>
+            <Dialog
+              open={isFormDialogOpen}
+              onOpenChange={(open) => {
+                setIsFormDialogOpen(open);
+                if (!open) {
+                  setSelectedUserId(null);
+                }
+              }}
+            >
+              {/* <DialogTrigger asChild>
                 <Button variant="green">
                   <FaPlus />
                   Tambah
                 </Button>
-              </DialogTrigger>
+              </DialogTrigger> */}
               <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <VisuallyHidden>
                   <DialogTitle></DialogTitle>
@@ -97,7 +138,7 @@ export default function Users() {
                 </VisuallyHidden>
 
                 <div className="flex items-center px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
-                  Tambah User
+                  {selectedUserId ? "Edit User" : "Tambah User"}
                 </div>
                 <UserForm userId={selectedUserId} />
               </DialogContent>
@@ -120,12 +161,14 @@ export default function Users() {
                 value: true,
                 icon: <MdDelete />,
                 variant: "transRedText",
-                onClick: handleDelete,
+                onClick: (row: User) => handleDelete(row.id_user),
               },
             ]}
             customWidths={{
               username: "min-w-[14rem]",
               nama: "min-w-[14rem]",
+              gender: "min-w-[12rem]",
+              avatar: "min-w-[14rem]",
               phone_number: "min-w-[10rem]",
               roles: "min-w-[10rem]",
               password: "min-w-[10rem]",
@@ -142,12 +185,12 @@ export default function Users() {
           <BouncingImage
             image="/assets/exclamation-red-icon.svg"
             alt="Delete warning image"
-            width={60}
-            height={60}
+            width={120}
+            height={120}
           />
         }
         title="Peringatan"
-        content="Apakah anda ingin menghapus?"
+        content={`Apakah anda ingin menghapus user dengan id ${selectedUserId} ?`}
       />
     </>
   );

@@ -229,11 +229,11 @@ export default function GalleryDetailPage({ params, searchParams }: Props) {
 
   return (
     <>
-      {image && (
+      {/* {image && (
         <div className="bg-yellow-100 text-yellow-900 p-2 text-sm mb-4 rounded">
           Ini adalah tampilan <strong>preview</strong>
         </div>
-      )}
+      )} */}
       <GalleryDetail data={image} />
     </>
   );

@@ -23,7 +23,7 @@ type Props = {
 export default function GalleryDetail({ data }: Props) {
   return (
     <div className="max-w-[80vw] mx-auto p-4">
-      <h1 className="text-2xl font-semibold mb-4 capitalize">{data.name}</h1>
+      <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">{data.name}</h1>
 
       <div className="flex gap-2">
         <div className="relative w-full h-125 mb-4">

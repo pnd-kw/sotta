@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { useMenu } from "@/context/MenuContext";
 import Gallery from "../pages/Gallery";
 import Dashboard from "../pages/Dashboard";
@@ -16,7 +19,7 @@ export default function ContentPanel() {
       case "Customer experiences":
         return <CustomerExp />;
       case "User management":
-        return <Users />
+        return <Users />;
       default:
         return <div>Pilih Menu</div>;
     }

@@ -1,9 +1,15 @@
 "use client";
 
 import { useMenu } from "@/context/MenuContext";
+import { useAuthStore } from "@/store/authStore";
 import { JSX, useState } from "react";
 import { FaImages, FaStar } from "react-icons/fa";
-import { MdDashboard, MdExpandLess, MdExpandMore, MdPerson } from "react-icons/md";
+import {
+  MdDashboard,
+  MdExpandLess,
+  MdExpandMore,
+  MdPerson,
+} from "react-icons/md";
 
 type MenuItem = {
   title: string;
@@ -26,12 +32,12 @@ const sideMenus: MenuItem[] = [
   },
   {
     title: "Customer experiences",
-    icon: <FaStar />
+    icon: <FaStar />,
   },
   {
     title: "User management",
-    icon: <MdPerson />
-  }
+    icon: <MdPerson />,
+  },
 ];
 
 export default function SidebarAdmin({
@@ -39,6 +45,7 @@ export default function SidebarAdmin({
 }: SidebarAdminProps) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const { selectedMenu, setSelectedMenu } = useMenu();
+  const loggedInRoles = useAuthStore((state) => state.role);
 
   function handleSelectMenu(menu: MenuItem) {
     if (menu.children) {
@@ -63,24 +70,28 @@ export default function SidebarAdmin({
       style={{ willChange: "transform" }}
     >
       <div className="px-6 pt-20">
-        <span className="text-2xl text-white font-bold">Logo</span>
+        <span className="text-2xl text-white font-bold font-mono">Sotta</span>
       </div>
       <div className="py-10">
         {sideMenus.map((menu, index) => (
           <div key={index}>
-            <button
-              className={`flex items-center justify-between w-full px-4 py-2 hover:bg-[#996515] ${
-                selectedMenu === menu.title ? "bg-[#996515]" : ""
-              }`}
-              onClick={() => handleSelectMenu(menu)}
-            >
-              <span className="flex items-center gap-2 text-sm text-white">
-                {menu.icon}
-                {menu.title}
-              </span>
-              {menu.children &&
-                (openMenus[menu.title] ? <MdExpandLess /> : <MdExpandMore />)}
-            </button>
+            {menu.title === "User management" &&
+            loggedInRoles !== "superadmin" ? null : (
+              <button
+                className={`flex items-center justify-between w-full px-4 py-2 hover:bg-[#996515] ${
+                  selectedMenu === menu.title ? "bg-[#996515]" : ""
+                }`}
+                onClick={() => handleSelectMenu(menu)}
+              >
+                <span className="flex items-center gap-2 text-sm text-white">
+                  {menu.icon}
+                  {menu.title}
+                </span>
+                {menu.children &&
+                  (openMenus[menu.title] ? <MdExpandLess /> : <MdExpandMore />)}
+              </button>
+            )}
+
             <div
               className={`overflow-hidden transition-all ${
                 openMenus[menu.title] ? "max-h-40" : "max-h-0"

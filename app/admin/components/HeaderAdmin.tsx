@@ -1,12 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MdLogout, MdMenu } from "react-icons/md";
 import Image from "next/image";
 import { BsPersonCircle } from "react-icons/bs";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 
 type HeaderAdminProps = {
   openDrawer?: boolean;
@@ -18,8 +18,24 @@ export default function HeaderAdmin({
   sideMenuButton = () => {},
 }: HeaderAdminProps) {
   // const [searchKeyword, setSearchKeyword] = useState<string>("");
+  const [currentTime, setCurrentTime] = useState("");
   const [openProfileMenu, setOpenProfileMenu] = useState<boolean>(false);
+  const logout = useAuthStore((state) => state.logout);
+  const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const now = new Date();
+    const formatted = now.toLocaleString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    setCurrentTime(formatted);
+  }, []);
 
   function handleOpenProfileMenu() {
     setOpenProfileMenu((prev) => !prev);
@@ -58,7 +74,7 @@ export default function HeaderAdmin({
             Selamat datang admin Sotta Souvenir
           </span>
           <div className="flex items-center justify-between space-x-4">
-            <span className="text-sm">{format(new Date(), "EEEE, dd MMMM yyyy HH:mm", { locale: id })} WIB</span>
+            <span className="text-sm">{currentTime} WIB</span>
             <Button variant="gray" size="icon">
               <Image
                 src="/assets/avatar-1.svg"
@@ -75,12 +91,23 @@ export default function HeaderAdmin({
               >
                 <ul className="py-2">
                   <li className="flex pl-4 pr-16 py-1 text-sm text-stone-800 hover:bg-stone-200 w-full cursor-pointer">
-                    <Button variant="ghost" onClick={() => {}}>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        router.push("/profile");
+                      }}
+                    >
                       <BsPersonCircle /> Profile
                     </Button>
                   </li>
                   <li className="flex pl-4 pr-16 py-1 text-sm text-stone-800 hover:bg-stone-200 w-full cursor-pointer">
-                    <Button variant="ghost" onClick={() => {}}>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        logout();
+                        router.push("/login");
+                      }}
+                    >
                       <MdLogout /> Logout
                     </Button>
                   </li>

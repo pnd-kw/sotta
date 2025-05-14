@@ -31,6 +31,7 @@ interface IconButton<T> {
     | "secondary"
     | "ghost"
     | "link";
+  disabled?: boolean;
   onClick: (row: T) => void;
 }
 
@@ -156,9 +157,11 @@ export function Table<T extends Record<string, unknown>>({
     [listIconButton]
   );
 
-  function getActionColMinWidth(activeIconButtons: IconButton<T>[] = []): string {
+  function getActionColMinWidth(
+    activeIconButtons: IconButton<T>[] = []
+  ): string {
     const length = activeIconButtons.length;
-  
+
     const widths: Record<number, string> = {
       7: "min-w-[16rem]",
       6: "min-w-[14rem]",
@@ -168,7 +171,7 @@ export function Table<T extends Record<string, unknown>>({
       2: "min-w-[6rem]",
       1: "min-w-[4.5rem]",
     };
-  
+
     return widths[length] || "min-w-[4rem]";
   }
 
@@ -242,7 +245,9 @@ export function Table<T extends Record<string, unknown>>({
               <th className="bg-[#85582c] text-white border-r border-stone-300 sticky top-0 px-2 py-2">
                 <span className="font-normal">{formatHeader("no")}</span>
               </th>
-              {listIconButton.some((btn: IconButton<T>) => btn.value === true) ? (
+              {listIconButton.some(
+                (btn: IconButton<T>) => btn.value === true
+              ) ? (
                 <th
                   className={`bg-[#85582c] sticky top-0 px-2 py-2 border-r border-stone-300
                     ${getActionColMinWidth(activeIconButtons)}`}
@@ -331,14 +336,16 @@ export function Table<T extends Record<string, unknown>>({
                   }`}
                 >
                   <td
-                    className="text-center text-stone-800 border border-stone-300 whitespace-normal 
+                    className="text-center text-stone-800 whitespace-normal 
                   break-words max-w-[10rem]"
                   >
                     {index + 1}
                   </td>
-                  {listIconButton.some((btn: IconButton<T>) => btn.value === true) ? (
+                  {listIconButton.some(
+                    (btn: IconButton<T>) => btn.value === true
+                  ) ? (
                     <td
-                      className="border border-stone-300 whitespace-normal break-words 
+                      className="whitespace-normal break-words 
                     max-w-[10rem] px-2 py-2"
                     >
                       <div className="flex items-center justify-center">
@@ -348,6 +355,7 @@ export function Table<T extends Record<string, unknown>>({
                               key={btn.name}
                               variant={btn.variant}
                               size="icon"
+                              disabled={btn.disabled}
                               onClick={() => btn.onClick(item)}
                             >
                               {btn.icon}
@@ -378,7 +386,7 @@ export function Table<T extends Record<string, unknown>>({
                         className={
                           pinned
                             ? pinnedClass
-                            : `text-stone-800 border border-stone-300 whitespace-normal break-words 
+                            : `text-stone-800 whitespace-normal break-words 
                             max-w-[10rem] px-2 py-2 text-left ${
                               customWidths[key] || ""
                             }`
