@@ -2,9 +2,11 @@ import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 
 export default function CustomFileInput({
+  label,
   onChange,
   error,
 }: {
+  label: React.ReactNode;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
 }) {
@@ -26,7 +28,7 @@ export default function CustomFileInput({
   return (
     <div className="flex flex-col gap-1">
       <label className="text-sm font-medium text-stone-900">
-        Upload an image <span className="text-red-500">*</span>
+        {label}
       </label>
       <div className="flex items-center gap-3">
         <Button

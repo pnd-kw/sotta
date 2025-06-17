@@ -33,6 +33,7 @@ export const parseFakeToken = () => {
     }
     return payload;
   } catch (err) {
+    console.error(err);
     return null;
   }
 };

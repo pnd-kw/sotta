@@ -12,7 +12,7 @@ type MenuContextType = {
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
 
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedMenu, setSelectedMenu] = useState("Dashboard");
+  const [selectedMenu, setSelectedMenu] = useState<string>("Dashboard");
   const [anchor, setAnchor] = useState("");
 
   return (

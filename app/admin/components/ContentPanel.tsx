@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useMenu } from "@/context/MenuContext";
 import Gallery from "../pages/Gallery";
 import Dashboard from "../pages/Dashboard";

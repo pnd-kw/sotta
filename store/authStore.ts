@@ -1,36 +1,56 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { fakeLogin } from "@/utils/fakeAuth";
+import { loginUser } from "@/app/api/auth/login";
+import axiosInstance from "@/app/api/axiosInstance";
+import Cookies from "js-cookie";
+
+interface User {
+  id_user: string;
+  name: string;
+  email: string;
+  role_id: number;
+  role_name: string;
+  gender: string;
+  avatar: string | null;
+  phone_number: string;
+}
 
 interface AuthState {
-  username: string | null;
-  role: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
-//   loggedInUsername: string | null;
-//   loggedInUserRoles: string | null;
-//   setLoggedInUsername: (user: string | null) => void;
-//   setLoggedInUserRoles: (role: string | null) => void;
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      username: null,
-      role: null,
-      login: async (username, password) => {
-        const data = fakeLogin(username, password);
-        set({ username: data.username, role: data.role });
+      user: null,
+      token: null,
+      login: async (email, password) => {
+        const response = await loginUser({ email, password });
+
+        set({
+          user: response.user,
+          token: response.access_token,
+        });
+
+        Cookies.set("token", response.access_token, {
+          secure: true,
+          sameSite: "strict",
+          path: "/",
+          expires: 1, 
+        });
       },
-      logout: () => {
-        // localStorage.removeItem("token");
-        document.cookie = "token=; Max-Age=0; path=/;";
-        set({ username: null, role: null });
+      logout: async () => {
+        try {
+          await axiosInstance.post("/api/logout");
+        } catch (e) {
+          console.error(e);
+        }
+        Cookies.remove("token");
+        set({ user: null, token: null });
       },
-    //   loggedInUsername: null,
-    //   loggedInUserRoles: null,
-    //   setLoggedInUsername: (user) => set({ loggedInUsername: user }),
-    //   setLoggedInUserRoles: (role) => set({ loggedInUserRoles: role }),
     }),
     {
       name: "auth-storage",

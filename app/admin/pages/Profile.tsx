@@ -28,7 +28,7 @@ const users = [
 ];
 
 export default function Profile() {
-  const user = useAuthStore((state) => state.username);
+  const user = useAuthStore((state) => state.user?.name);
   const [selectedUser, setSelectedUser] = useState<string | null>("");
 
   function getUser() {

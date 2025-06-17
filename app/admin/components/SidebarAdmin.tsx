@@ -45,7 +45,7 @@ export default function SidebarAdmin({
 }: SidebarAdminProps) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const { selectedMenu, setSelectedMenu } = useMenu();
-  const loggedInRoles = useAuthStore((state) => state.role);
+  const loggedInRoles = useAuthStore((state) => state.user?.role_name);
 
   function handleSelectMenu(menu: MenuItem) {
     if (menu.children) {

@@ -3,6 +3,7 @@ import "./globals.css";
 // import Header from "./components/Header";
 // import Footer from "./components/Footer";
 import { Josefin_Sans, Nova_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 
 const josefin = Josefin_Sans({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${josefin.variable} ${nova.variable}`}>
       <body className="bg-white text-neutral-900 antialiased font-sans">
+        <Toaster richColors closeButton position="top-center" />
         {/* <Header /> */}
         <main className="flex-1">{children}</main>
         {/* <Footer /> */}

@@ -241,7 +241,7 @@ const customerExp = [
 
 export default function CustomerExp() {
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
-  const loggedInRoles = useAuthStore((state) => state.role);
+  const loggedInRoles = useAuthStore((state) => state.user?.role_name);
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
   function handleDelete(id_review: string) {

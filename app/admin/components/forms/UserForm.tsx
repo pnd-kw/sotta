@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import NextImage from "next/image";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { FaCamera } from "react-icons/fa";
 import { z } from "zod";
@@ -105,9 +106,9 @@ const userSchema = z
 
 async function validateAvatarResolution(file: File): Promise<string | null> {
   return new Promise((resolve) => {
-    const reader = new FileReader();
+    const reader: FileReader = new FileReader();
     reader.onload = () => {
-      const img = new Image();
+      const img: HTMLImageElement = new Image();
       img.onload = () => {
         if (img.width > MAX_AVATAR_WIDTH || img.height > MAX_AVATAR_HEIGHT) {
           resolve(
@@ -146,6 +147,8 @@ export default function UserForm({ userId }: UserFormProps) {
   const watchAvatar = watch("avatar");
   const watchGender = watch("gender") as "laki-laki" | "perempuan";
 
+  const prevUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (watchAvatar && watchAvatar[0]) {
       const file = watchAvatar[0];
@@ -158,6 +161,8 @@ export default function UserForm({ userId }: UserFormProps) {
   }, [watchAvatar]);
 
   useEffect(() => {
+    const isFormClosing = prevUserIdRef.current !== null && userId === null;
+
     if (userId) {
       const userData = users.find((item) => item.id_user === userId);
       if (userData) {
@@ -173,7 +178,7 @@ export default function UserForm({ userId }: UserFormProps) {
           setPreview(userData.avatar);
         }
       }
-    } else {
+    } else if (!isFormClosing) {
       if (watchGender === "perempuan" || watchGender === "laki-laki") {
         setPreview(
           watchGender === "perempuan"
@@ -182,7 +187,9 @@ export default function UserForm({ userId }: UserFormProps) {
         );
       }
     }
-  }, [userId, setValue, watchGender]);
+
+    prevUserIdRef.current = userId;
+  }, [userId, setValue, watchAvatar, watchGender]);
 
   const onSubmit = async (data: UserForm) => {
     const file = data.avatar?.[0];
@@ -221,10 +228,12 @@ export default function UserForm({ userId }: UserFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-4 py-2">
       <div className="flex flex-col items-center space-y-2">
-        <img
+        <NextImage
           src={preview}
           alt="Avatar Preview"
-          className="w-32 h-32 rounded-full object-cover border"
+          width={150}
+          height={150}
+          className="rounded-full object-cover border"
         />
         <label
           htmlFor="avatar-upload"

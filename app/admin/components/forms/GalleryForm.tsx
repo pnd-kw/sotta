@@ -6,207 +6,58 @@ import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import CustomFileInput from "../CustomFileInput";
 import { Checkbox } from "@/components/ui/checkbox";
+import { createGalleryImage } from "@/app/api/gallery/createGalleryImage";
+import { useAuthStore } from "@/store/authStore";
+import ToastWithProgress from "@/utils/ToastWithProgress";
+import { updateGalleryImage } from "@/app/api/gallery/updateGalleryImage";
 
 interface GalleryFormProps {
-  imageId: string | undefined;
+  imageId?: string;
+  initialData?: GalleryImage | null;
 }
 
 type GalleryImage = {
   id: string;
   name: string;
   published: boolean;
-  url: string;
+  imageUrl: string;
+  public_id: string;
   alt: string;
   caption: string;
   tags: string[];
   mimeType: string;
   size: number;
-  createdAt: string;
-  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+  created_at: string;
+  updated_at: string;
 };
-
-const galleryImage: GalleryImage[] = [
-  {
-    id: "img_001",
-    name: "tabernakel",
-    published: false,
-    url: "/assets/tabernakel.svg",
-    alt: "Tabernakel",
-    caption: "Tabernakel dari bahan kuningan",
-    tags: ["tabernakel", "kuningan"],
-    mimeType: "image/svg",
-    size: 125034,
-    createdAt: "2020-09-10T10:12:40.000456Z",
-    updatedAt: "2020-09-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_002",
-    name: "bejana kuningan",
-    published: true,
-    url: "/assets/bejana_kuningan.svg",
-    alt: "Bejana kuningan",
-    caption: "Bejana dari kuningan",
-    tags: ["bejana", "kuningan"],
-    mimeType: "image/svg",
-    size: 98342,
-    createdAt: "2021-02-10T10:12:40.000456Z",
-    updatedAt: "2021-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_003",
-    name: "plakat souvenir",
-    published: true,
-    url: "/assets/plakat_souvenir.svg",
-    alt: "Plakat souvenir",
-    caption: "Plakat untuk souvenir",
-    tags: ["plakat", "souvenir"],
-    mimeType: "image/svg",
-    size: 85760,
-    createdAt: "2023-04-10T10:12:40.000456Z",
-    updatedAt: "2023-04-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_004",
-    name: "kalung etnik",
-    published: true,
-    url: "/assets/kalung_etnik.svg",
-    alt: "Kalung etnik",
-    caption: "Kalung etnik dari kuningan",
-    tags: ["kalung", "etnik", "kuningan"],
-    mimeType: "image/svg",
-    size: 90214,
-    createdAt: "2024-02-10T10:12:40.000456Z",
-    updatedAt: "2024-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_005",
-    name: "lencana kerajaan",
-    published: true,
-    url: "/assets/lencana_kerajaan.svg",
-    alt: "Lencana kerajaan",
-    caption: "Lencana kerajaan kuno",
-    tags: ["lencana", "kerajaan"],
-    mimeType: "image/svg",
-    size: 75900,
-    createdAt: "2025-06-10T10:12:40.000456Z",
-    updatedAt: "2025-06-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_006",
-    name: "plakat ikan",
-    published: true,
-    url: "/assets/plakat_ikan.svg",
-    alt: "Plakat ikan",
-    caption: "Plakat ikan terbang",
-    tags: ["plakat", "ikan"],
-    mimeType: "image/svg",
-    size: 80000,
-    createdAt: "2019-01-10T10:12:40.000456Z",
-    updatedAt: "2019-01-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_007",
-    name: "taber",
-    published: true,
-    url: "/assets/tabernakel.svg",
-    alt: "Taber",
-    caption: "Taber kuningan",
-    tags: ["taber", "kuningan"],
-    mimeType: "image/svg",
-    size: 50000,
-    createdAt: "2018-02-10T10:12:40.000456Z",
-    updatedAt: "2018-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_008",
-    name: "bejana",
-    published: true,
-    url: "/assets/bejana_kuningan.svg",
-    alt: "Bejana",
-    caption: "Bejana kuning",
-    tags: ["bejana", "kuning"],
-    mimeType: "image/svg",
-    size: 40000,
-    createdAt: "2020-07-10T10:12:40.000456Z",
-    updatedAt: "2020-07-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_009",
-    name: "plakat",
-    published: true,
-    url: "/assets/plakat_souvenir.svg",
-    alt: "Plakat",
-    caption: "Plakat perak",
-    tags: ["plakat", "perak"],
-    mimeType: "image/svg",
-    size: 60000,
-    createdAt: "2023-05-10T10:12:40.000456Z",
-    updatedAt: "2023-05-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_010",
-    name: "kalung",
-    published: true,
-    url: "/assets/kalung_etnik.svg",
-    alt: "Kalung",
-    caption: "Kalung unik",
-    tags: ["kalung", "unik"],
-    mimeType: "image/svg",
-    size: 70000,
-    createdAt: "2024-02-10T10:12:40.000456Z",
-    updatedAt: "2024-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_011",
-    name: "lencana",
-    published: true,
-    url: "/assets/lencana_kerajaan.svg",
-    alt: "Lencana",
-    caption: "Lencana indah",
-    tags: ["lencana", "indah"],
-    mimeType: "image/svg",
-    size: 90000,
-    createdAt: "2024-08-10T10:12:40.000456Z",
-    updatedAt: "2024-08-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_012",
-    name: "ikan",
-    published: true,
-    url: "/assets/plakat_ikan.svg",
-    alt: "Ikan",
-    caption: "Ikan laut",
-    tags: ["ikan", "laut"],
-    mimeType: "image/svg",
-    size: 98769,
-    createdAt: "2019-07-10T10:12:40.000456Z",
-    updatedAt: "2019-07-10T10:12:40.000456Z",
-  },
-];
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const MAX_WIDTH = 1920;
 const MAX_HEIGHT = 1080;
 
-const galleryFormSchema = z.object({
-  name: z.string().min(1, "Image name wajib diisi"),
-  published: z.boolean().optional(),
-  alt: z.string().min(1, "Image alt wajib diisi"),
-  caption: z.string().min(1, "Caption image wajib diisi"),
-  category: z.string().min(1, "Image category wajib diisi"),
-  tags: z.array(z.string()).optional(),
-  image: z
-    .any()
-    .refine((file) => file?.length === 1, "Gambar wajib diunggah")
-    .refine(
-      (file) => file?.[0]?.type?.startsWith("image/"),
-      "File harus berupa gambar"
-    )
-    .refine(
-      (file) => file?.[0]?.size <= MAX_FILE_SIZE,
-      `Ukuran gambar maksimal ${MAX_FILE_SIZE / (1024 * 1024)}MB`
-    ),
-});
+const galleryFormSchema = (isEditMode: boolean) =>
+  z.object({
+    name: z.string().min(1, "Image name wajib diisi"),
+    published: z.boolean().optional(),
+    alt: z.string().min(1, "Image alt wajib diisi"),
+    caption: z.string().min(1, "Caption image wajib diisi"),
+    tags: z.array(z.string()).optional(),
+    image: isEditMode
+      ? z.any().optional()
+      : z
+          .any()
+          .refine((file) => file?.length === 1, "Gambar wajib diunggah")
+          .refine(
+            (file) => file?.[0]?.type?.startsWith("image/"),
+            "File harus berupa gambar"
+          )
+          .refine(
+            (file) => file?.[0]?.size <= MAX_FILE_SIZE,
+            `Ukuran gambar maksimal ${MAX_FILE_SIZE / (1024 * 1024)}MB`
+          ),
+  });
 
 const validateImageResolution = (file: File): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -226,40 +77,43 @@ const validateImageResolution = (file: File): Promise<boolean> => {
   });
 };
 
-type GalleryForm = z.infer<typeof galleryFormSchema>;
+type GalleryForm = z.infer<ReturnType<typeof galleryFormSchema>>;
 
-export default function GalleryForm({ imageId }: GalleryFormProps) {
+export default function GalleryForm({
+  imageId,
+  initialData,
+}: GalleryFormProps) {
+  const isEditMode = !!initialData;
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     control,
     setValue,
+    reset,
     watch,
   } = useForm<GalleryForm>({
-    resolver: zodResolver(galleryFormSchema),
+    resolver: zodResolver(galleryFormSchema(isEditMode)),
     defaultValues: { published: false },
   });
-
+  const user = useAuthStore((state) => state.user);
   const [tagsInput, setTagsInput] = useState("");
 
   useEffect(() => {
-    if (imageId) {
-      const imageData = galleryImage.find((item) => item.id === imageId);
-      if (imageData) {
-        const tagArray = Array.isArray(imageData.tags) ? imageData.tags : [];
-        const tagString = tagArray.join(" ");
+    if (initialData) {
+      reset({
+        name: initialData.name,
+        alt: initialData.alt,
+        caption: initialData.caption,
+        tags: initialData.tags ?? [],
+        published: initialData.published ?? false,
+        image: undefined,
+      });
 
-        setValue("name", imageData.name);
-        setValue("alt", imageData.alt);
-        setValue("caption", imageData.caption);
-        setValue("tags", imageData.tags);
-        setValue("published", imageData.published);
-
-        setTagsInput(tagString);
-      }
+      setTagsInput((initialData.tags ?? []).join(" "));
     }
-  }, [imageId, setValue]);
+  }, [initialData, reset]);
 
   const nameValue = watch("name");
 
@@ -284,15 +138,52 @@ export default function GalleryForm({ imageId }: GalleryFormProps) {
         return;
       }
     }
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("alt", data.alt);
-    formData.append("caption", data.caption);
-    formData.append("category", data.category);
-    formData.append("tags", JSON.stringify(data.tags || []));
-    formData.append("image", data.image[0]);
 
-    console.log("send data to api", data);
+    const basePayload = {
+      name: data.name,
+      published: !!data.published,
+      alt: data.alt,
+      caption: data.caption,
+      tags: data.tags || [],
+      image: file,
+      updatedBy: user?.name || "",
+    };
+
+    try {
+      if (initialData && imageId) {
+        await updateGalleryImage(basePayload, { params: { id: imageId } });
+        ToastWithProgress({
+          title: "Berhasil",
+          description: "Data image gallery berhasil diperbarui.",
+          duration: 3000,
+          type: "success",
+        });
+      } else {
+        await createGalleryImage({
+          ...basePayload,
+          createdBy: user?.name || "",
+        });
+        ToastWithProgress({
+          title: "Berhasil",
+          description: "Data image gallery berhasil disimpan.",
+          duration: 3000,
+          type: "success",
+        });
+        reset();
+        setTagsInput("");
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Failed to add image gallery", error);
+      ToastWithProgress({
+        title: "Gagal",
+        description: initialData
+          ? "Gagal memperbarui data image gallery."
+          : "Gagal menyimpan data image gallery.",
+        duration: 3000,
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -335,24 +226,6 @@ export default function GalleryForm({ imageId }: GalleryFormProps) {
         </div>
         <div>
           <label
-            htmlFor="category"
-            className="text-sm font-medium text-stone-900"
-          >
-            Image category <span className="text-red-500">*</span>
-          </label>
-          <Input
-            {...register("category")}
-            placeholder="Logam"
-            aria-invalid={!!errors.category}
-          />
-          {errors.category && (
-            <p className="pt-2 px-2 text-left text-xs text-red-500">
-              {errors.category.message}
-            </p>
-          )}
-        </div>
-        <div>
-          <label
             htmlFor="caption"
             className="text-sm font-medium text-stone-900"
           >
@@ -386,7 +259,6 @@ export default function GalleryForm({ imageId }: GalleryFormProps) {
           </label>
           <Input
             textarea
-            // {...register("tags")}
             value={tagsInput}
             onChange={(e) => {
               const rawValue = e.target.value;
@@ -418,8 +290,30 @@ export default function GalleryForm({ imageId }: GalleryFormProps) {
             </span>
           </div>
         </div>
+        {initialData && (
+          <div>
+            Image link :{" "}
+            <a
+              href={initialData.imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {initialData.imageUrl}
+            </a>
+          </div>
+        )}
         <div>
           <CustomFileInput
+            label={
+              initialData ? (
+                "Upload new image or just ignore this field"
+              ) : (
+                <>
+                  Upload an image <span className="text-red-500">*</span>
+                </>
+              )
+            }
             onChange={(e) => setValue("image", e.target.files)}
             error={
               typeof errors.image?.message === "string"
@@ -435,8 +329,10 @@ export default function GalleryForm({ imageId }: GalleryFormProps) {
             <div className="flex space-x-2">
               <Checkbox
                 id="published"
-                checked={field.value}
-                onCheckedChange={field.onChange}
+                checked={!!field.value}
+                onCheckedChange={(checked: boolean | "indeterminate") =>
+                  field.onChange(checked === true)
+                }
               />
               <div className="grid gap-1.5 leading-none">
                 <label
@@ -454,7 +350,7 @@ export default function GalleryForm({ imageId }: GalleryFormProps) {
           )}
         />
         <div className="flex justify-end">
-          <Button variant="green">Simpan</Button>
+          <Button variant="green">{initialData ? "Perbarui" : "Simpan"}</Button>
         </div>
       </form>
     </>

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MdDelete, MdEdit, MdPreview } from "react-icons/md";
@@ -19,12 +19,21 @@ import ImageAlertDialog, {
 } from "@/utils/ImageAlertDialog";
 import BouncingImage from "@/utils/BouncingImage";
 import { format } from "date-fns";
+import { useAuthStore } from "@/store/authStore";
+import { getGalleryImages } from "@/app/api/gallery/getGalleryImages";
+import Spinner from "@/utils/Spinner";
+import { getGalleryImagesById } from "@/app/api/gallery/getGalleryImageById";
+import ToastWithProgress from "@/utils/ToastWithProgress";
+import { updatePublishGalleryImage } from "@/app/api/gallery/updateGalleryImage";
+import { deleteGalleryImage } from "@/app/api/gallery/deleteGalleryImage";
+// import { searchGalleryImages } from "@/app/api/gallery/searchGalleryImages";
 
 type GalleryImage = {
   id: string;
   name: string;
   published: boolean;
-  url: string;
+  imageUrl: string;
+  public_id: string;
   alt: string;
   caption: string;
   tags: string[];
@@ -32,217 +41,210 @@ type GalleryImage = {
   size: number;
   createdBy: string;
   updatedBy: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 };
 
-const galleryImage: GalleryImage[] = [
-  {
-    id: "img_001",
-    name: "tabernakel",
-    published: false,
-    url: "/assets/tabernakel.svg",
-    alt: "Tabernakel",
-    caption: "Tabernakel dari bahan kuningan",
-    tags: ["tabernakel", "kuningan"],
-    mimeType: "image/svg",
-    size: 125034,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2020-09-10T10:12:40.000456Z",
-    updatedAt: "2020-09-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_002",
-    name: "bejana kuningan",
-    published: true,
-    url: "/assets/bejana_kuningan.svg",
-    alt: "Bejana kuningan",
-    caption: "Bejana dari kuningan",
-    tags: ["bejana", "kuningan"],
-    mimeType: "image/svg",
-    size: 98342,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2021-02-10T10:12:40.000456Z",
-    updatedAt: "2021-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_003",
-    name: "plakat souvenir",
-    published: true,
-    url: "/assets/plakat_souvenir.svg",
-    alt: "Plakat souvenir",
-    caption: "Plakat untuk souvenir",
-    tags: ["plakat", "souvenir"],
-    mimeType: "image/svg",
-    size: 85760,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2023-04-10T10:12:40.000456Z",
-    updatedAt: "2023-04-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_004",
-    name: "kalung etnik",
-    published: true,
-    url: "/assets/kalung_etnik.svg",
-    alt: "Kalung etnik",
-    caption: "Kalung etnik dari kuningan",
-    tags: ["kalung", "etnik", "kuningan"],
-    mimeType: "image/svg",
-    size: 90214,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2024-02-10T10:12:40.000456Z",
-    updatedAt: "2024-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_005",
-    name: "lencana kerajaan",
-    published: true,
-    url: "/assets/lencana_kerajaan.svg",
-    alt: "Lencana kerajaan",
-    caption: "Lencana kerajaan kuno",
-    tags: ["lencana", "kerajaan"],
-    mimeType: "image/svg",
-    size: 75900,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2025-06-10T10:12:40.000456Z",
-    updatedAt: "2025-06-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_006",
-    name: "plakat ikan",
-    published: true,
-    url: "/assets/plakat_ikan.svg",
-    alt: "Plakat ikan",
-    caption: "Plakat ikan terbang",
-    tags: ["plakat", "ikan"],
-    mimeType: "image/svg",
-    size: 80000,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2019-01-10T10:12:40.000456Z",
-    updatedAt: "2019-01-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_007",
-    name: "taber",
-    published: true,
-    url: "/assets/tabernakel.svg",
-    alt: "Taber",
-    caption: "Taber kuningan",
-    tags: ["taber", "kuningan"],
-    mimeType: "image/svg",
-    size: 50000,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2018-02-10T10:12:40.000456Z",
-    updatedAt: "2018-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_008",
-    name: "bejana",
-    published: true,
-    url: "/assets/bejana_kuningan.svg",
-    alt: "Bejana",
-    caption: "Bejana kuning",
-    tags: ["bejana", "kuning"],
-    mimeType: "image/svg",
-    size: 40000,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2020-07-10T10:12:40.000456Z",
-    updatedAt: "2020-07-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_009",
-    name: "plakat",
-    published: true,
-    url: "/assets/plakat_souvenir.svg",
-    alt: "Plakat",
-    caption: "Plakat perak",
-    tags: ["plakat", "perak"],
-    mimeType: "image/svg",
-    size: 60000,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2023-05-10T10:12:40.000456Z",
-    updatedAt: "2023-05-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_010",
-    name: "kalung",
-    published: true,
-    url: "/assets/kalung_etnik.svg",
-    alt: "Kalung",
-    caption: "Kalung unik",
-    tags: ["kalung", "unik"],
-    mimeType: "image/svg",
-    size: 70000,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2024-02-10T10:12:40.000456Z",
-    updatedAt: "2024-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_011",
-    name: "lencana",
-    published: true,
-    url: "/assets/lencana_kerajaan.svg",
-    alt: "Lencana",
-    caption: "Lencana indah",
-    tags: ["lencana", "indah"],
-    mimeType: "image/svg",
-    size: 90000,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2024-08-10T10:12:40.000456Z",
-    updatedAt: "2024-08-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_012",
-    name: "ikan",
-    published: true,
-    url: "/assets/plakat_ikan.svg",
-    alt: "Ikan",
-    caption: "Ikan laut",
-    tags: ["ikan", "laut"],
-    mimeType: "image/svg",
-    size: 98769,
-    createdBy: "alfian_persie",
-    updatedBy: "alfian_persie",
-    createdAt: "2019-07-10T10:12:40.000456Z",
-    updatedAt: "2019-07-10T10:12:40.000456Z",
-  },
-];
+// interface SearchGalleryParams {
+//   search?: string;
+//   per_page?: number;
+//   page?: number;
+// }
 
 export default function Gallery() {
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [paginationInfo, setPaginationInfo] = useState<{
+    current_page: number;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+    last_page: number;
+    total: number;
+  }>({
+    current_page: 1,
+    next_page_url: null,
+    prev_page_url: null,
+    last_page: 1,
+    total: 0,
+  });
+  const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(true);
   const [imagePerPage, setImagePerPage] = useState(8);
-  const [imageGalleryPage, setImageGalleryPage] = useState(0);
+  // const [imageGalleryPage, setImageGalleryPage] = useState(0);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState<boolean>(false);
-  const [loggedInRoles, setLoggedInRoles] = useState<string | null>("admin");
+  const [searchQuery, setSearchQuery] = useState("");
+  const user = useAuthStore((state) => state.user);
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
-  const totalPages = Math.ceil(galleryImage.length / imagePerPage);
+  const fetchGallery = async (
+    page = 1,
+    per_page = imagePerPage,
+    search = ""
+  ) => {
+    try {
+      setIsLoadingGallery(true);
+      const data = await getGalleryImages({
+        page,
+        per_page,
+        search,
+      });
+      const mappedData = data.data.map(
+        (item): GalleryImage => ({
+          ...item,
+          published: Boolean(item.published),
+        })
+      );
+      setGalleryImages(mappedData);
+      setPaginationInfo({
+        current_page: data.current_page,
+        next_page_url: data.next_page_url,
+        prev_page_url: data.prev_page_url,
+        last_page: data.last_page,
+        total: data.total,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Failed to fetch gallery images", error);
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  };
 
-  const startIndex = imagePerPage * imageGalleryPage;
-  const endIndex = startIndex + imagePerPage;
-  const visibleImage = galleryImage.slice(startIndex, endIndex);
+  useEffect(() => {
+    fetchGallery(1, imagePerPage, searchQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imagePerPage]);
 
-  function handleEdit(id_image: string) {
-    const image = galleryImage.find((item) => item.id === id_image) ?? null;
-    setSelectedImage(image);
-    setIsFormDialogOpen(true);
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      fetchGallery(1, imagePerPage, "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const resetGalleryIfEmpty = async () => {
+      if (searchQuery.trim() === "") {
+        fetchGallery(1, imagePerPage, "");
+      }
+    };
+
+    resetGalleryIfEmpty();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  // const totalPages = Math.ceil(galleryImages.length / imagePerPage);
+
+  // const startIndex = imagePerPage * imageGalleryPage;
+  // const endIndex = startIndex + imagePerPage;
+  // const visibleImage = galleryImages.slice(startIndex, endIndex);
+
+  async function handleEdit(id_image: string) {
+    try {
+      const data = await getGalleryImagesById({ id: id_image });
+      setSelectedImage({
+        ...data,
+        published: Boolean(data.published),
+      });
+      setIsFormDialogOpen(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Failed to get gallery image by id", error);
+      ToastWithProgress({
+        title: "Gagal",
+        description: "Gagal mendapatkan data image yang dipilih.",
+        duration: 3000,
+        type: "error",
+      });
+    }
   }
 
-  function handleDelete(id_image: string) {
-    const image = galleryImage.find((item) => item.id === id_image) ?? null;
-    setSelectedImage(image);
-    dialog.current?.openDialog();
+  async function handlePublish(id_image: string | undefined) {
+    if (!id_image) {
+      ToastWithProgress({
+        title: "Gagal",
+        description: "ID image tidak ditemukan",
+        duration: 3000,
+        type: "error",
+      });
+      return;
+    }
+    try {
+      await updatePublishGalleryImage(
+        { published: !selectedImage?.published, updatedBy: user?.name },
+        { params: { id: id_image } }
+      );
+      ToastWithProgress({
+        title: "Berhasil",
+        description: "Image berhasil dipublikasikan",
+        duration: 3000,
+        type: "success",
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Failed to update publish gallery image", error);
+      ToastWithProgress({
+        title: "Gagal",
+        description: "Image gagal dipublikasikan",
+        duration: 3000,
+        type: "error",
+      });
+    }
+  }
+
+  function handleSearchGalleryImages() {
+    fetchGallery(paginationInfo.current_page, imagePerPage, searchQuery);
+  }
+
+  async function handleGetTargetImage(id_image: string) {
+    try {
+      const data = await getGalleryImagesById({ id: id_image });
+      setSelectedImage({
+        ...data,
+        published: Boolean(data.published),
+      });
+      dialog.current?.openDialog();
+    } catch (error) {
+      console.error("Failed to get target image by id", error);
+      ToastWithProgress({
+        title: "Gagal",
+        description: "Gagal mendapatkan data image yang dipilih.",
+        duration: 3000,
+        type: "error",
+      });
+    }
+  }
+
+  async function handleDelete(id_image: string | undefined) {
+    if (!id_image) {
+      ToastWithProgress({
+        title: "Gagal",
+        description: "ID image tidak ditemukan",
+        duration: 3000,
+        type: "error",
+      });
+      return;
+    }
+    try {
+      await deleteGalleryImage(id_image);
+      ToastWithProgress({
+        title: "Berhasil",
+        description: `Berhasil menghapus data image ${id_image}`,
+        duration: 3000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Failed to delete data image", error);
+      ToastWithProgress({
+        title: "Gagal",
+        description: `Gagal menghapus data image ${id_image}`,
+        duration: 3000,
+        type: "error",
+      });
+    }
+  }
+
+  function handlePageChange(newPage: number) {
+    fetchGallery(newPage, imagePerPage, searchQuery);
   }
 
   return (
@@ -255,6 +257,15 @@ export default function Gallery() {
           <div className="flex items-center justify-between py-4">
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearchGalleryImages();
+                }
+              }}
               placeholder="Search image..."
               className="w-1/2 border border-stone-300 rounded-md px-2 py-2"
             />
@@ -281,7 +292,7 @@ export default function Gallery() {
                   <FaPlus /> Tambah
                 </Button>
               </DialogTrigger> */}
-              <DialogContent className="max-h-[90vh] overflow-y-auto">
+              <DialogContent className="min-w-[60vw] max-h-[90vh] overflow-y-auto">
                 <VisuallyHidden>
                   <DialogTitle></DialogTitle>
                 </VisuallyHidden>
@@ -292,157 +303,180 @@ export default function Gallery() {
                 </VisuallyHidden>
 
                 <div className="flex items-center px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
-                  Tambah Gallery
+                  {selectedImage ? "Edit Image" : "Tambah Image"}
                 </div>
-                <GalleryForm imageId={selectedImage?.id} />
+                <GalleryForm
+                  imageId={selectedImage?.id}
+                  initialData={selectedImage}
+                />
               </DialogContent>
             </Dialog>
           </div>
         </div>
         <div className="md:max-w-[80vw] mx-auto px-4 py-4 rounded-lg shadow-md">
-          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 max-w-screen-xl mx-auto mb-4">
-            {visibleImage.map((item) => (
-              <div
-                key={item.name}
-                title={item.caption ?? item.alt}
-                className="relative aspect-square border border-white overflow-hidden group"
-              >
-                <div className="absolute inset-0 w-[300px] h-[300px] flex items-center px-4 bg-black/20 opacity-0 group-hover:opacity-100  transition-opacity duration-300">
-                  <div className="text-sm text-white mb-4">
-                    <p>
-                      <strong>Ukuran:</strong> {(item.size / 1024).toFixed(2)}{" "}
-                      KB
-                    </p>
-                    <p>
-                      <strong>Tipe:</strong> {item.mimeType}
-                    </p>
-                    <p>
-                      <strong>Dibuat:</strong>{" "}
-                      {format(new Date(item.createdAt), "dd MMMM yyyy")}
-                    </p>
-                    <p>
-                      <strong>Diperbarui:</strong>{" "}
-                      {format(new Date(item.updatedAt), "dd MMMM yyyy")}
-                    </p>
-                    <p>
-                      <strong>Dibuat oleh:</strong> {item.createdBy}
-                    </p>
-                    <p>
-                      <strong>Diperbarui oleh:</strong> {item.updatedBy}
-                    </p>
+          {isLoadingGallery ? (
+            <Spinner />
+          ) : galleryImages.length === 0 ? (
+            <div className="w-full h-[50vh] flex items-center justify-center">
+              <span className="text-xl text-stone-900">
+                Data gallery images tidak ditemukan.
+              </span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 max-w-screen-xl mx-auto mb-4">
+              {galleryImages.map((item) => (
+                <div
+                  key={item.id}
+                  title={item.caption ?? item.alt}
+                  className="relative aspect-square border border-white overflow-hidden group"
+                >
+                  <div className="absolute inset-0 w-[300px] h-[300px] flex items-center px-4 bg-black/20 opacity-0 group-hover:opacity-100  transition-opacity duration-300">
+                    <div className="text-sm text-white mb-4">
+                      <p>
+                        <strong>Ukuran:</strong> {(item.size / 1024).toFixed(2)}{" "}
+                        KB
+                      </p>
+                      <p>
+                        <strong>Tipe:</strong> {item.mimeType}
+                      </p>
+                      <p>
+                        <strong>Dibuat:</strong>{" "}
+                        {format(new Date(item.created_at), "dd MMMM yyyy")}
+                      </p>
+                      <p>
+                        <strong>Diperbarui:</strong>{" "}
+                        {format(new Date(item.updated_at), "dd MMMM yyyy")}
+                      </p>
+                      <p>
+                        <strong>Dibuat oleh:</strong> {item.createdBy}
+                      </p>
+                      <p>
+                        <strong>Diperbarui oleh:</strong> {item.updatedBy}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <Image
-                  src={item.url}
-                  alt={item.alt}
-                  width={300}
-                  height={300}
-                  className="object-cover w-full h-full"
-                />
-                <div className="absolute inset-0 flex justify-end py-2 px-2 space-x-2">
-                  {!item.published && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="green"
-                          onClick={() => setSelectedImage(item)}
-                        >
-                          <MdPreview />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent fullscreen>
-                        <VisuallyHidden>
-                          <DialogTitle></DialogTitle>
-                        </VisuallyHidden>
-                        <VisuallyHidden>
-                          <DialogDescription>
-                            Dialog untuk preview image gallery halaman
-                            pengunjung
-                          </DialogDescription>
-                        </VisuallyHidden>
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.alt}
+                    width={300}
+                    height={300}
+                    className="object-cover w-full h-full"
+                  />
+                  <div className="absolute inset-0 flex justify-end py-2 px-2 space-x-2">
+                    {!item.published && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="green"
+                            onClick={() => setSelectedImage(item)}
+                          >
+                            <MdPreview />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent fullscreen>
+                          <VisuallyHidden>
+                            <DialogTitle></DialogTitle>
+                          </VisuallyHidden>
+                          <VisuallyHidden>
+                            <DialogDescription>
+                              Dialog untuk preview image gallery halaman
+                              pengunjung
+                            </DialogDescription>
+                          </VisuallyHidden>
 
-                        <div className="flex items-center space-x-4 px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
-                          <Button variant="green">Publish</Button>
-                          <span>Preview </span>
-                        </div>
+                          <div className="flex items-center space-x-4 px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
+                            <Button
+                              variant="green"
+                              onClick={() => {
+                                if (selectedImage?.id) {
+                                  handlePublish(selectedImage.id);
+                                }
+                              }}
+                            >
+                              Publish
+                            </Button>
+                            <span>Preview</span>
+                          </div>
 
-                        {selectedImage && (
-                          <div className="max-w-[80vw] mx-auto p-4">
-                            <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">
-                              {selectedImage.name}
-                            </h1>
+                          {selectedImage && (
+                            <div className="max-w-[80vw] mx-auto p-4">
+                              <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">
+                                {selectedImage.name}
+                              </h1>
 
-                            <div className="flex gap-2">
-                              <div className="relative w-full h-125 mb-4">
-                                <Image
-                                  src={selectedImage.url}
-                                  alt={selectedImage.alt}
-                                  fill
-                                  className="object-contain rounded"
-                                />
-                              </div>
+                              <div className="flex gap-2">
+                                <div className="relative w-full h-125 mb-4">
+                                  <Image
+                                    src={selectedImage.imageUrl}
+                                    alt={selectedImage.alt}
+                                    fill
+                                    className="object-contain rounded"
+                                  />
+                                </div>
 
-                              <div className="flex flex-col">
-                                <p className="text-gray-700 mb-2">
-                                  {selectedImage.caption}
-                                </p>
+                                <div className="flex flex-col">
+                                  <p className="text-gray-700 mb-2">
+                                    {selectedImage.caption}
+                                  </p>
 
-                                <div className="mt-4">
-                                  <strong>Tag:</strong>{" "}
-                                  {selectedImage.tags.map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 mr-2 rounded-md"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
+                                  <div className="mt-4">
+                                    <strong>Tag:</strong>{" "}
+                                    {selectedImage?.tags?.map((tag) => (
+                                      <span
+                                        key={tag}
+                                        className="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 mr-2 rounded-md"
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                  <Button
-                    variant="whiteAmberText"
-                    onClick={() => handleEdit(item.id)}
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                    <Button
+                      variant="whiteAmberText"
+                      onClick={() => {
+                        handleEdit(item.id);
+                      }}
+                    >
+                      <MdEdit />
+                    </Button>
+                    <Button
+                      variant="whiteRedText"
+                      disabled={user?.role_name !== "superadmin"}
+                      onClick={() => handleGetTargetImage(item.id)}
+                    >
+                      <MdDelete />
+                    </Button>
+                  </div>
+                  <div
+                    className={`absolute bottom-1 right-1 px-4 py-2 rounded-md text-xs font-bold ${
+                      item.published ? "bg-green-600 text-white" : "bg-gray-100"
+                    }`}
                   >
-                    <MdEdit />
-                  </Button>
-                  <Button
-                    variant="whiteRedText"
-                    disabled={loggedInRoles !== "superadmin"}
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    <MdDelete />
-                  </Button>
+                    {item.published ? "Published" : "Draft"}
+                  </div>
                 </div>
-                <div
-                  className={`absolute bottom-1 right-1 px-4 py-2 rounded-md text-xs font-bold ${
-                    item.published ? "bg-green-600 text-white" : "bg-gray-100"
-                  }`}
-                >
-                  {item.published ? "Published" : "Draft"}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <div className="flex justify-between">
             <RowsPerPageSelector
               value={imagePerPage}
               onChange={(val) => {
                 setImagePerPage(val);
-                setImageGalleryPage(0);
               }}
-              total={galleryImage.length}
+              total={paginationInfo.total}
               options={[8, 16, 24]}
             />
             <Pagination
-              page={imageGalleryPage + 1}
-              totalPages={totalPages}
-              onPageChange={(p) => setImageGalleryPage(p)}
+              page={paginationInfo.current_page}
+              totalPages={paginationInfo.last_page}
+              onPageChange={(p) => handlePageChange(p)}
             />
           </div>
         </div>
@@ -459,6 +493,7 @@ export default function Gallery() {
         }
         title="Peringatan"
         content={`Apakah anda ingin menghapus image ${selectedImage?.id} ${selectedImage?.name} `}
+        button={() => handleDelete(selectedImage?.id)}
       />
     </>
   );

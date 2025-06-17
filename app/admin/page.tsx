@@ -1,14 +1,35 @@
-import { cookies } from "next/headers";
+// "use client";
+
+// import { useAuthStore } from "@/store/authStore";
+// import ContentPanel from "./components/ContentPanel";
+// import { useRouter } from "next/navigation";
+// import { useEffect, useState } from "react";
+// import Spinner from "@/utils/Spinner";
+
+// export default function AdminPage() {
+//   const router = useRouter();
+//   const [isVerified, setIsVerified] = useState<boolean>(false);
+//   const token = useAuthStore((state) => state.token);
+
+//   useEffect(() => {
+//     if (!token) {
+//       router.replace("/login");
+//       setIsVerified(false);
+//     } else {
+//       setIsVerified(false);
+//     }
+//   }, [token, router]);
+
+//   if (isVerified === null) {
+//     return <Spinner />;
+//   }
+
+//   return isVerified ? <ContentPanel /> : null;
+// }
+"use client";
+
 import ContentPanel from "./components/ContentPanel";
-import { redirect } from "next/navigation";
 
-export default async function AdminPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token");
-
-  if (!token) {
-    redirect("/login");
-  }
-
+export default function AdminPage() {
   return <ContentPanel />;
 }
