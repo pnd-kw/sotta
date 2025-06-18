@@ -40,8 +40,6 @@ export const updateGalleryImage = async (
     });
 
   try {
-    console.log(formData);
-
     for (const [key, value] of formData.entries()) {
       console.log(`${key}:`, value);
     }
@@ -54,8 +52,6 @@ export const updateGalleryImage = async (
         },
       }
     );
-
-    console.log("response", response);
 
     return response;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

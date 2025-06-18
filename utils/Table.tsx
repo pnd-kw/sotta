@@ -44,9 +44,11 @@ interface TableProps<T> {
   data: T[];
   defaultSortBy?: string;
   defaultPinned?: PinnedColumn;
+  page?: number;
   perPage?: number;
   listIconButton?: IconButton<T>[];
   customWidths?: Record<string, string>;
+  onPageChange?: (page: number) => void;
 }
 
 function formatHeader(key: string): string {

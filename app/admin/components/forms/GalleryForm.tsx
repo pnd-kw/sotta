@@ -174,7 +174,7 @@ export default function GalleryForm({
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error("Failed to add image gallery", error);
+      console.error(error);
       ToastWithProgress({
         title: "Gagal",
         description: initialData

@@ -66,7 +66,7 @@ export default function Gallery() {
     last_page: 1,
     total: 0,
   });
-  const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(true);
+  const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(false);
   const [imagePerPage, setImagePerPage] = useState(8);
   // const [imageGalleryPage, setImageGalleryPage] = useState(0);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
@@ -492,7 +492,7 @@ export default function Gallery() {
           />
         }
         title="Peringatan"
-        content={`Apakah anda ingin menghapus image ${selectedImage?.id} ${selectedImage?.name} `}
+        content={`Apakah anda ingin menghapus image ${selectedImage?.id} ${selectedImage?.name} ?`}
         button={() => handleDelete(selectedImage?.id)}
       />
     </>

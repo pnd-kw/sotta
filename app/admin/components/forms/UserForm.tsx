@@ -1,108 +1,90 @@
+import { createUser } from "@/app/api/user/createUser";
+import { updateUser } from "@/app/api/user/updateUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ToastWithProgress from "@/utils/ToastWithProgress";
 import { zodResolver } from "@hookform/resolvers/zod";
 import NextImage from "next/image";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaCamera } from "react-icons/fa";
 import { z } from "zod";
 
 interface UserFormProps {
-  userId: string | null;
+  userId: string | undefined;
+  initialData?: User | null;
 }
 
 type Gender = "laki-laki" | "perempuan";
 
 type User = {
   id_user: string;
-  username: string;
-  nama: string;
+  name: string;
+  email: string;
   gender: Gender;
   avatar: string;
   phone_number: string;
-  roles: string;
+  roles: {
+    id: number;
+    name: string;
+  };
+  role_id: number;
   password: string;
-  password_confirm: string;
+  password_confirmation: string;
   created_at: string;
   updated_at: string;
 };
 
-const users: User[] = [
-  {
-    id_user: "manutd20",
-    username: "alfian_persie",
-    nama: "Eva Alfian",
-    gender: "laki-laki",
-    avatar: "/assets/avatar-1.svg",
-    phone_number: "085774801409",
-    roles: "superadmin",
-    password: "rahasia",
-    password_confirm: "rahasia",
-    created_at: "2025-05-13T10:09:23.000456Z",
-    updated_at: "2025-05-13T10:09:23.000456Z",
-  },
-  {
-    id_user: "xvk765ia",
-    username: "john",
-    nama: "john doe",
-    gender: "laki-laki",
-    avatar: "/assets/avatar-2.svg",
-    phone_number: "085524311234",
-    roles: "admin",
-    password: "admin123",
-    password_confirm: "admin123",
-    created_at: "2025-02-10T10:14:40.000456Z",
-    updated_at: "2025-02-10T10:14:40.000456Z",
-  },
-  {
-    id_user: "myc285pl",
-    username: "susie",
-    nama: "susan",
-    gender: "perempuan",
-    avatar: "/assets/avatar-3.svg",
-    phone_number: "085578900987",
-    roles: "account officer",
-    password: "account123",
-    password_confirm: "account123",
-    created_at: "2025-02-10T10:14:41.000456Z",
-    updated_at: "2025-02-10T10:14:41.000456Z",
-  },
+const roles = [
+  { id: 2, name: "admin" },
+  { id: 3, name: "guest" },
 ];
 
 const MAX_AVATAR_SIZE = 1 * 1024 * 1024;
 const MAX_AVATAR_WIDTH = 300;
 const MAX_AVATAR_HEIGHT = 300;
 
-const userSchema = z
-  .object({
-    username: z.string().min(1, "Username wajib diisi"),
-    nama: z.string().min(1, "Nama wajib diisi"),
-    gender: z.enum(["laki-laki", "perempuan"], {
-      required_error: "Jenis kelamin wajib dipilih",
-    }),
-    phone_number: z
-      .string()
-      .min(10, "No HP minimal 10 digit")
-      .regex(/^[0-9]+$/, "No HP hanya boleh angka"),
-    roles: z.string().min(1, "Role wajib diisi"),
-    password: z.string().min(6, "Password minimal 6 karakter"),
-    pass_confirm: z.string().min(1, "Konfirmasi password wajib diisi"),
-    avatar: z
-      .any()
-      .optional()
-      .refine(
-        (file) => !file?.length || file?.[0]?.type?.startsWith("image/"),
-        "File harus berupa gambar"
-      )
-      .refine(
-        (file) => !file?.length || file?.[0]?.size <= MAX_AVATAR_SIZE,
-        "Ukuran avatar maksimal 1MB"
-      ),
-  })
-  .refine((data) => data.password === data.pass_confirm, {
-    message: "Password tidak sama",
-    path: ["pass_confirm"],
-  });
+const userSchema = (isEditMode: boolean) =>
+  z
+    .object({
+      name: z.string().min(1, "Nama wajib diisi"),
+      email: z
+        .string()
+        .min(1, "Email wajib diisi")
+        .email("Format email tidak valid"),
+      gender: z.enum(["laki-laki", "perempuan"], {
+        required_error: "Jenis kelamin wajib dipilih",
+      }),
+      phone_number: z
+        .string()
+        .min(10, "No HP minimal 10 digit")
+        .regex(/^[0-9]+$/, "No HP hanya boleh angka"),
+      roles: z.coerce.number({
+        required_error: "Role wajib dipilih",
+        invalid_type_error: "Role tidak valid",
+      }),
+      password: z.string().min(6, "Password minimal 6 karakter"),
+      password_confirmation: z
+        .string()
+        .min(1, "Konfirmasi password wajib diisi"),
+      avatar: isEditMode
+        ? z.any().optional()
+        : z
+            .any()
+            .optional()
+            .refine(
+              (file) => !file?.length || file?.[0]?.type?.startsWith("image/"),
+              "File harus berupa gambar"
+            )
+            .refine(
+              (file) => !file?.length || file?.[0]?.size <= MAX_AVATAR_SIZE,
+              "Ukuran avatar maksimal 1MB"
+            ),
+    })
+    .refine((data) => data.password === data.password_confirmation, {
+      message: "Password tidak sama",
+      path: ["password_confirmation"],
+    });
 
 async function validateAvatarResolution(file: File): Promise<string | null> {
   return new Promise((resolve) => {
@@ -126,17 +108,19 @@ async function validateAvatarResolution(file: File): Promise<string | null> {
   });
 }
 
-type UserForm = z.infer<typeof userSchema>;
+type UserForm = z.infer<ReturnType<typeof userSchema>>;
 
-export default function UserForm({ userId }: UserFormProps) {
+export default function UserForm({ userId, initialData }: UserFormProps) {
+  const isEditMode = !!initialData;
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
+    reset,
     watch,
   } = useForm<UserForm>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(userSchema(isEditMode)),
     defaultValues: {
       gender: "laki-laki",
     },
@@ -145,9 +129,26 @@ export default function UserForm({ userId }: UserFormProps) {
   const [preview, setPreview] = useState<string>("/assets/avatar-1.svg");
 
   const watchAvatar = watch("avatar");
-  const watchGender = watch("gender") as "laki-laki" | "perempuan";
+  // const watchGender = watch("gender") as "laki-laki" | "perempuan";
 
-  const prevUserIdRef = useRef<string | null>(null);
+  // const prevUserIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        name: initialData.name,
+        email: initialData.email,
+        gender: initialData.gender,
+        phone_number: initialData.phone_number,
+        roles: initialData.role_id,
+        password: "",
+        password_confirmation: "",
+      });
+      if (initialData.avatar) {
+        setPreview(initialData.avatar);
+      }
+    }
+  }, [initialData, reset]);
 
   useEffect(() => {
     if (watchAvatar && watchAvatar[0]) {
@@ -160,69 +161,77 @@ export default function UserForm({ userId }: UserFormProps) {
     }
   }, [watchAvatar]);
 
-  useEffect(() => {
-    const isFormClosing = prevUserIdRef.current !== null && userId === null;
-
-    if (userId) {
-      const userData = users.find((item) => item.id_user === userId);
-      if (userData) {
-        setValue("username", userData.username);
-        setValue("nama", userData.nama);
-        setValue("gender", userData.gender);
-        setValue("phone_number", userData.phone_number);
-        setValue("roles", userData.roles);
-        setValue("password", userData.password);
-        setValue("pass_confirm", userData.password_confirm);
-
-        if (!watchAvatar || watchAvatar.length === 0) {
-          setPreview(userData.avatar);
-        }
-      }
-    } else if (!isFormClosing) {
-      if (watchGender === "perempuan" || watchGender === "laki-laki") {
-        setPreview(
-          watchGender === "perempuan"
-            ? "/assets/avatar-2.svg"
-            : "/assets/avatar-1.svg"
-        );
-      }
-    }
-
-    prevUserIdRef.current = userId;
-  }, [userId, setValue, watchAvatar, watchGender]);
-
   const onSubmit = async (data: UserForm) => {
-    const file = data.avatar?.[0];
+    let avatarFile = data.avatar?.[0];
 
-    if (file) {
-      const resolutionError = await validateAvatarResolution(file);
+    if (avatarFile) {
+      const resolutionError = await validateAvatarResolution(avatarFile);
       if (resolutionError) {
         alert(resolutionError);
         return;
       }
     }
 
-    const formData = new FormData();
-
-    formData.append("username", data.username);
-    formData.append("nama", data.nama);
-    formData.append("gender", data.gender);
-    formData.append("phone_number", data.phone_number);
-    formData.append("roles", data.roles);
-    formData.append("password", data.password);
-    formData.append("pass_confirm", data.pass_confirm);
-
-    if (data.avatar?.[0]) {
-      formData.append("avatar", data.avatar[0]);
-    } else if (!userId) {
-      const defaultAvatar =
+    if (!avatarFile && !userId) {
+      const defaultAvatarPath =
         data.gender === "laki-laki"
           ? "/assets/avatar-1.svg"
           : "/assets/avatar-2.svg";
-      formData.append("avatar", defaultAvatar);
+
+      const response = await fetch(defaultAvatarPath);
+      const blob = await response.blob();
+      const filename =
+        defaultAvatarPath.split("/").pop() || "default-avatar.svg";
+      avatarFile = new File([blob], filename, { type: blob.type });
     }
 
-    console.log("send data to api", data);
+    const mappedGender = data.gender === "laki-laki" ? "male" : "female";
+
+    const basePayload = {
+      name: data.name,
+      email: data.email,
+      gender: mappedGender,
+      avatar: avatarFile as File,
+      phone_number: data.phone_number,
+      role_id: data.roles,
+      password: data.password,
+      password_confirmation: data.password_confirmation,
+    };
+
+    try {
+      if (initialData && userId) {
+        await updateUser(basePayload, { params: { id: userId } });
+        ToastWithProgress({
+          title: "Berhasil",
+          description: "Data user berhasil diperbarui.",
+          duration: 3000,
+          type: "success",
+        });
+      } else {
+        console.log(basePayload);
+        await createUser(basePayload);
+        ToastWithProgress({
+          title: "Berhasil",
+          description: "Data user berhasil disimpan.",
+          duration: 3000,
+          type: "success",
+        });
+        reset();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (error.response && error.response.data?.errors) {
+        console.error("Validation errors:", error.response.data.errors);
+      }
+      ToastWithProgress({
+        title: "Gagal",
+        description: initialData
+          ? "Gagal memperbarui data user."
+          : "Gagal menyimpan data user.",
+        duration: 3000,
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -254,7 +263,7 @@ export default function UserForm({ userId }: UserFormProps) {
           </p>
         )}
       </div>
-      <div>
+      {/* <div>
         <label
           htmlFor="username"
           className="text-sm font-medium text-stone-900"
@@ -271,19 +280,34 @@ export default function UserForm({ userId }: UserFormProps) {
             {errors.username.message}
           </p>
         )}
-      </div>
+      </div> */}
       <div>
-        <label htmlFor="nama" className="text-sm font-medium text-stone-900">
+        <label htmlFor="name" className="text-sm font-medium text-stone-900">
           Nama <span className="text-red-500">*</span>
         </label>
         <Input
-          {...register("nama")}
+          {...register("name")}
           placeholder="John doe ..."
-          aria-invalid={!!errors.nama}
+          aria-invalid={!!errors.name}
         />
-        {errors.nama && (
+        {errors.name && (
           <p className="pt-2 px-2 text-left text-xs text-red-500">
-            {errors.nama.message}
+            {errors.name.message}
+          </p>
+        )}
+      </div>
+      <div>
+        <label htmlFor="email" className="text-sm font-medium text-stone-900">
+          Email <span className="text-red-500">*</span>
+        </label>
+        <Input
+          {...register("email")}
+          placeholder="john.doe@gmail.com ..."
+          aria-invalid={!!errors.email}
+        />
+        {errors.email && (
+          <p className="pt-2 px-2 text-left text-xs text-red-500">
+            {errors.email.message}
           </p>
         )}
       </div>
@@ -322,11 +346,23 @@ export default function UserForm({ userId }: UserFormProps) {
         <label htmlFor="roles" className="text-sm font-medium text-stone-900">
           Role <span className="text-red-500">*</span>
         </label>
-        <Input
-          {...register("roles")}
-          placeholder="Admin ..."
-          aria-invalid={!!errors.roles}
-        />
+        <select
+          id="roles"
+          {...register("roles", {
+            valueAsNumber: true, // agar hasilnya jadi number, bukan string
+          })}
+          defaultValue={initialData?.role_id?.toString() || ""}
+          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+        >
+          <option value="" disabled>
+            Pilih role...
+          </option>
+          {roles.map((role) => (
+            <option key={role.id} value={role.id}>
+              {role.name}
+            </option>
+          ))}
+        </select>
         {errors.roles && (
           <p className="pt-2 px-2 text-left text-xs text-red-500">
             {errors.roles.message}
@@ -353,19 +389,19 @@ export default function UserForm({ userId }: UserFormProps) {
       </div>
       <div>
         <label
-          htmlFor="pass_confirm"
+          htmlFor="password_confirmation"
           className="text-sm font-medium text-stone-900"
         >
           Konfirmasi Password <span className="text-red-500">*</span>
         </label>
         <Input
-          {...register("pass_confirm")}
+          {...register("password_confirmation")}
           placeholder="123456 ..."
-          aria-invalid={!!errors.pass_confirm}
+          aria-invalid={!!errors.password_confirmation}
         />
-        {errors.pass_confirm && (
+        {errors.password_confirmation && (
           <p className="pt-2 px-2 text-left text-xs text-red-500">
-            {errors.pass_confirm.message}
+            {errors.password_confirmation.message}
           </p>
         )}
       </div>
