@@ -7,8 +7,8 @@ interface UserDataUpdate {
   avatar: File | null;
   phone_number: string;
   role_id: number;
-  password: string;
-  password_confirmation: string;
+  password?: string;
+  password_confirmation?: string;
 }
 
 export const updateUser = async (
@@ -22,8 +22,8 @@ export const updateUser = async (
   formData.append("gender", userDataUpdate.gender);
   formData.append("phone_number", userDataUpdate.phone_number);
   formData.append("role_id", userDataUpdate.role_id.toString());
-  formData.append("password", userDataUpdate.password);
-  formData.append("pass_confirm", userDataUpdate.password_confirmation);
+  formData.append("password", userDataUpdate.password || "");
+  formData.append("pass_confirm", userDataUpdate.password_confirmation || "");
 
   if (userDataUpdate.avatar) {
     formData.append("avatar", userDataUpdate.avatar);

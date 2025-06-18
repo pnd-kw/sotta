@@ -24,7 +24,7 @@ type User = {
   gender: Gender;
   avatar: string;
   phone_number: string;
-  roles: {
+  role: {
     id: number;
     name: string;
   };
@@ -35,7 +35,7 @@ type User = {
   updated_at: string;
 };
 
-const roles = [
+const role = [
   { id: 2, name: "admin" },
   { id: 3, name: "guest" },
 ];
@@ -44,7 +44,7 @@ const MAX_AVATAR_SIZE = 1 * 1024 * 1024;
 const MAX_AVATAR_WIDTH = 300;
 const MAX_AVATAR_HEIGHT = 300;
 
-const userSchema = (isEditMode: boolean) =>
+const makeUserSchema = (isEditMode: boolean) =>
   z
     .object({
       name: z.string().min(1, "Nama wajib diisi"),
@@ -59,14 +59,22 @@ const userSchema = (isEditMode: boolean) =>
         .string()
         .min(10, "No HP minimal 10 digit")
         .regex(/^[0-9]+$/, "No HP hanya boleh angka"),
-      roles: z.coerce.number({
-        required_error: "Role wajib dipilih",
-        invalid_type_error: "Role tidak valid",
-      }),
-      password: z.string().min(6, "Password minimal 6 karakter"),
-      password_confirmation: z
-        .string()
-        .min(1, "Konfirmasi password wajib diisi"),
+      role: z.object(
+        {
+          id: z.number(),
+          name: z.string(),
+        },
+        {
+          required_error: "Role wajib dipilih",
+          invalid_type_error: "Role tidak valid",
+        }
+      ),
+      password: isEditMode
+        ? z.string().optional()
+        : z.string().min(6, "Password minimal 6 karakter"),
+      password_confirmation: isEditMode
+        ? z.string().optional()
+        : z.string().min(1, "Konfirmasi password wajib diisi"),
       avatar: isEditMode
         ? z.any().optional()
         : z
@@ -108,7 +116,8 @@ async function validateAvatarResolution(file: File): Promise<string | null> {
   });
 }
 
-type UserForm = z.infer<ReturnType<typeof userSchema>>;
+type CreateUserForm = z.infer<ReturnType<typeof makeUserSchema>>;
+type UpdateUserForm = z.infer<ReturnType<typeof makeUserSchema>>;
 
 export default function UserForm({ userId, initialData }: UserFormProps) {
   const isEditMode = !!initialData;
@@ -117,12 +126,14 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
     reset,
     watch,
-  } = useForm<UserForm>({
-    resolver: zodResolver(userSchema(isEditMode)),
+  } = useForm<CreateUserForm | UpdateUserForm>({
+    resolver: zodResolver(makeUserSchema(isEditMode)),
     defaultValues: {
       gender: "laki-laki",
+      role: { id: 2, name: "admin" },
     },
   });
 
@@ -140,7 +151,10 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
         email: initialData.email,
         gender: initialData.gender,
         phone_number: initialData.phone_number,
-        roles: initialData.role_id,
+        role: {
+          id: initialData.role.id,
+          name: initialData.role.name,
+        },
         password: "",
         password_confirmation: "",
       });
@@ -161,7 +175,7 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
     }
   }, [watchAvatar]);
 
-  const onSubmit = async (data: UserForm) => {
+  const onSubmit = async (data: CreateUserForm | UpdateUserForm) => {
     let avatarFile = data.avatar?.[0];
 
     if (avatarFile) {
@@ -193,14 +207,35 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
       gender: mappedGender,
       avatar: avatarFile as File,
       phone_number: data.phone_number,
-      role_id: data.roles,
-      password: data.password,
-      password_confirmation: data.password_confirmation,
+      role_id: data.role.id,
+      // password: data.password,
+      // password_confirmation: data.password_confirmation,
+    };
+
+    const cleanPayload = (payload: Record<string, unknown>) => {
+      return Object.fromEntries(
+        Object.entries(payload).filter(([, v]) => v !== undefined)
+      );
     };
 
     try {
       if (initialData && userId) {
-        await updateUser(basePayload, { params: { id: userId } });
+        await updateUser(
+          {
+            ...basePayload,
+            ...(data.password
+              ? {
+                  password: data.password,
+                  password_confirmation: data.password_confirmation,
+                }
+              : {}),
+            // ...(data.password ? { password: data.password } : {}),
+            // ...(data.password_confirmation
+            //   ? { password_confirmation: data.password_confirmation }
+            //   : {}),
+          },
+          { params: { id: userId } }
+        );
         ToastWithProgress({
           title: "Berhasil",
           description: "Data user berhasil diperbarui.",
@@ -208,8 +243,11 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
           type: "success",
         });
       } else {
-        console.log(basePayload);
-        await createUser(basePayload);
+        await createUser({
+          ...basePayload,
+          password: data.password as string,
+          password_confirmation: data.password_confirmation as string,
+        });
         ToastWithProgress({
           title: "Berhasil",
           description: "Data user berhasil disimpan.",
@@ -220,9 +258,7 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      if (error.response && error.response.data?.errors) {
-        console.error("Validation errors:", error.response.data.errors);
-      }
+      console.log(error);
       ToastWithProgress({
         title: "Gagal",
         description: initialData
@@ -343,29 +379,35 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
         )}
       </div>
       <div>
-        <label htmlFor="roles" className="text-sm font-medium text-stone-900">
+        <label htmlFor="role" className="text-sm font-medium text-stone-900">
           Role <span className="text-red-500">*</span>
         </label>
         <select
-          id="roles"
-          {...register("roles", {
-            valueAsNumber: true, // agar hasilnya jadi number, bukan string
-          })}
-          defaultValue={initialData?.role_id?.toString() || ""}
+          id="role"
+          // {...register("role", {
+          onChange={(e) => {
+            const selectedId = Number(e.target.value);
+            const selected = role.find((role) => role.id === selectedId);
+
+            console.log("Role dipilih", selected);
+            if (selected) setValue("role", selected);
+          }}
+          // })}
+          value={watch("role")?.id || ""}
           className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
         >
           <option value="" disabled>
             Pilih role...
           </option>
-          {roles.map((role) => (
+          {role.map((role) => (
             <option key={role.id} value={role.id}>
               {role.name}
             </option>
           ))}
         </select>
-        {errors.roles && (
+        {errors.role && (
           <p className="pt-2 px-2 text-left text-xs text-red-500">
-            {errors.roles.message}
+            {errors.role.message}
           </p>
         )}
       </div>

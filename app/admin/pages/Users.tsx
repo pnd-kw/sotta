@@ -23,14 +23,27 @@ import Spinner from "@/utils/Spinner";
 
 type Gender = "laki-laki" | "perempuan";
 
-type User = {
+// Tipe untuk menampilkan data ke dalam tabel
+type UserTable = {
   id_user: string;
   name: string;
   email: string;
   gender: Gender;
   avatar: string;
   phone_number: string;
-  roles: {
+  created_at: string;
+  updated_at: string;
+  role_name: string;
+};
+
+type UserData = {
+  id_user: string;
+  name: string;
+  email: string;
+  gender: Gender;
+  avatar: string;
+  phone_number: string;
+  role: {
     id: number;
     name: string;
   };
@@ -43,18 +56,33 @@ const mapGenderFromAPI = (gender: string): "laki-laki" | "perempuan" => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const transformUser = (user: any): User => ({
+const transformUserTable = (user: any): UserTable => ({
   id_user: user.id_user,
   name: user.name,
   email: user.email,
   gender: mapGenderFromAPI(user.gender),
   avatar: user.avatar,
   phone_number: user.phone_number,
-  roles: user.roles,
+  created_at: user.created_at,
+  updated_at: user.updated_at,
+  role_name: user.role.name,
+});
+
+const transformUserData = (user: any): UserData => ({
+  id_user: user.id_user,
+  name: user.name,
+  email: user.email,
+  gender: mapGenderFromAPI(user.gender),
+  avatar: user.avatar,
+  phone_number: user.phone_number,
+  role: {
+    id: user.role.id,
+    name: user.role.name,
+  },
 });
 
 export default function Users() {
-  const [userData, setUserData] = useState<User[]>([]);
+  const [userData, setUserData] = useState<UserTable[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<{
     current_page: number;
     next_page_url: string | null;
@@ -69,13 +97,13 @@ export default function Users() {
     total: 0,
   });
   const [isLoadingUser, setIsLoadingUser] = useState<boolean>(false);
-  const [userPerPage, setUserPerPage] = useState(8);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userPerPage, setUserPerPage] = useState(10);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
-  console.log(selectedUser);
+  console.log(paginationInfo);
 
   const fetchUser = async (page = 1, per_page = userPerPage, search = "") => {
     try {
@@ -85,7 +113,8 @@ export default function Users() {
         per_page,
         search,
       });
-      setUserData(data.data.map(transformUser));
+      console.log("data", data.data);
+      setUserData(data.data.map(transformUserTable));
       setPaginationInfo({
         current_page: data.current_page,
         next_page_url: data.next_page_url,
@@ -101,17 +130,21 @@ export default function Users() {
     }
   };
 
-  useEffect(() => {
-    fetchUser(1, userPerPage, searchQuery);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userPerPage]);
+  // useEffect(() => {
+  //   fetchUser(1, userPerPage, searchQuery);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [userPerPage]);
+
+  // useEffect(() => {
+  //   if (searchQuery.trim() === "") {
+  //     fetchUser(1, userPerPage, "");
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [searchQuery]);
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      fetchUser(1, userPerPage, "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+    fetchUser(paginationInfo.current_page, userPerPage, searchQuery);
+  }, [userPerPage, searchQuery]);
 
   useEffect(() => {
     const resetGalleryIfEmpty = async () => {
@@ -128,7 +161,7 @@ export default function Users() {
     try {
       const data = await getUserById({ id: id_user });
       console.log("res", data);
-      setSelectedUser(transformUser(data));
+      setSelectedUser(transformUserData(data));
       setIsFormDialogOpen(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -149,7 +182,7 @@ export default function Users() {
   async function handleGetTargetUser(id_user: string) {
     try {
       const data = await getUserById({ id: id_user });
-      setSelectedUser(transformUser(data));
+      setSelectedUser(transformUserData(data));
       dialog.current?.openDialog();
     } catch (error) {
       console.error("Failed to get target user by id", error);
@@ -192,7 +225,12 @@ export default function Users() {
   }
 
   function handlePageChange(newPage: number) {
-    fetchUser(newPage, userPerPage, searchQuery);
+    const newPageFixed = newPage + 1;
+    setPaginationInfo((prev) => ({
+      ...prev,
+      current_page: newPageFixed,
+    }));
+    fetchUser(newPageFixed, userPerPage, searchQuery);
   }
 
   return (
@@ -266,22 +304,33 @@ export default function Users() {
           ) : (
             <Table
               data={userData}
+              page={paginationInfo?.current_page - 1}
+              totalPage={Math.ceil(paginationInfo?.total / userPerPage)}
               listIconButton={[
                 {
                   name: "edit",
                   value: true,
                   icon: <MdEdit />,
                   variant: "transAmberText",
-                  onClick: (row: User) => handleEdit(row.id_user),
+                  onClick: (row: UserTable) => handleEdit(row.id_user),
                 },
                 {
                   name: "delete",
                   value: true,
                   icon: <MdDelete />,
                   variant: "transRedText",
-                  onClick: (row: User) => handleGetTargetUser(row.id_user),
+                  onClick: (row: UserTable) => handleGetTargetUser(row.id_user),
                 },
               ]}
+              perPage={userPerPage}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={(newPerPage) => {
+                setUserPerPage(newPerPage);
+                setPaginationInfo((prev) => ({
+                  ...prev,
+                  current_page: 1,
+                }));
+              }}
               customWidths={{
                 name: "min-w-[14rem]",
                 email: "min-w-[14rem]",

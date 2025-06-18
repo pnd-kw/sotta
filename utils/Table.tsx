@@ -48,7 +48,9 @@ interface TableProps<T> {
   perPage?: number;
   listIconButton?: IconButton<T>[];
   customWidths?: Record<string, string>;
+  totalPage?: number;
   onPageChange?: (page: number) => void;
+  onRowsPerPageChange?: (page: number) => void;
 }
 
 function formatHeader(key: string): string {
@@ -101,6 +103,7 @@ export function Table<T extends Record<string, unknown>>({
   data = [],
   defaultSortBy = "",
   defaultPinned = { column: "", position: "left" },
+  page = 1,
   perPage = 10,
   listIconButton = [
     {
@@ -112,11 +115,14 @@ export function Table<T extends Record<string, unknown>>({
     },
   ],
   customWidths = {},
+  totalPage = 1,
+  onPageChange,
+  onRowsPerPageChange,
 }: TableProps<T>): JSX.Element {
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [orderBy, setOrderBy] = useState<string>(defaultSortBy);
   const [rowsPerPage, setRowsPerPage] = useState<number>(perPage);
-  const [page, setPage] = useState<number>(0);
+  // const [page, setPage] = useState<number>(0);
   const [hoveredColumn, setHoveredColumn] = useState<string | null>(null);
   const [pinnedColumn, setPinnedColumn] = useState<PinnedColumn[]>([
     defaultPinned,
@@ -126,9 +132,11 @@ export function Table<T extends Record<string, unknown>>({
   const [startX, setStartX] = useState<number>(0);
   const [scrollLeft, setScrollLeft] = useState<number>(0);
 
+  console.log("Data yang diterima di tabel", data);
+
   const headers = Object.keys(data?.[0] || {});
   const isEvenNumber = (num: number) => num % 2 === 0;
-  const totalPages = Math.ceil(data.length / rowsPerPage);
+  // const totalPages = Math.ceil(data.length / rowsPerPage);
   const splitIndex = Math.floor(headers.length / 2);
   const leftColumn = headers.slice(0, splitIndex);
 
@@ -140,18 +148,17 @@ export function Table<T extends Record<string, unknown>>({
     };
   }, []);
 
-  useEffect(() => {
-    const newTotalPages = Math.ceil(data.length / rowsPerPage);
-    if (page >= newTotalPages) {
-      setPage(Math.max(0, newTotalPages - 1));
-    }
-  }, [page, rowsPerPage, data.length]);
+  // useEffect(() => {
+  //   const newTotalPages = Math.ceil(data.length / rowsPerPage);
+  //   if (page >= newTotalPages) {
+  //     setPage(Math.max(0, newTotalPages - 1));
+  //   }
+  // }, [page, rowsPerPage, data.length]);
 
   const visibleData = useMemo(() => {
     if (!Array.isArray(data) || data.length === 0) return [];
-    return [...data]
-      .sort(getComparator(order, orderBy))
-      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    return [...data].sort(getComparator(order, orderBy));
+    // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [data, order, orderBy, page, rowsPerPage]);
 
   const activeIconButtons = useMemo(
@@ -341,7 +348,7 @@ export function Table<T extends Record<string, unknown>>({
                     className="text-center text-stone-800 whitespace-normal 
                   break-words max-w-[10rem]"
                   >
-                    {index + 1}
+                    {page * perPage + index + 1}
                   </td>
                   {listIconButton.some(
                     (btn: IconButton<T>) => btn.value === true
@@ -416,16 +423,19 @@ export function Table<T extends Record<string, unknown>>({
       <div className="flex justify-between">
         <RowsPerPageSelector
           value={perPage}
-          onChange={setRowsPerPage}
+          onChange={(newVal) => {
+            setRowsPerPage(newVal);
+            onRowsPerPageChange?.(newVal);
+          }}
           total={data.length}
           options={[10, 20, 50, 100]}
         />
         <Pagination
           page={page + 1}
-          totalPages={totalPages}
+          totalPages={totalPage}
           onPageChange={(p) => {
-            console.log("New page from pagination", p);
-            setPage(p);
+            console.log("Halaman dipilih:", p);
+            onPageChange?.(p);
           }}
         />
       </div>
