@@ -4,7 +4,7 @@ interface UserData {
   name: string;
   email: string;
   gender: string;
-  avatar: File;
+  avatar?: File;
   phone_number: string;
   role_id: number;
   password: string;
@@ -16,11 +16,14 @@ export const createUser = async (userData: UserData) => {
   formData.append("name", userData.name);
   formData.append("email", userData.email);
   formData.append("gender", userData.gender);
-  formData.append("avatar", userData.avatar);
   formData.append("phone_number", userData.phone_number);
   formData.append("role_id", userData.role_id.toString());
   formData.append("password", userData.password);
   formData.append("password_confirmation", userData.password_confirmation);
+
+  if (userData.avatar) {
+    formData.append("avatar", userData.avatar);
+  }
 
   try {
     const response = await axiosInstance.post("/api/register", formData, {
@@ -30,7 +33,7 @@ export const createUser = async (userData: UserData) => {
     });
 
     return response.data;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.response) {
       const errorMessage =

@@ -5,157 +5,223 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import ToastWithProgress from "@/utils/ToastWithProgress";
+import { createCustomerReview } from "@/app/api/customer_review/createCustomerReview";
+import { v4 as uuidv4 } from "uuid";
+import { getCustomerReviews } from "@/app/api/customer_review/getCustomerReviews";
 
-interface CustomerExperience {
+// interface CustomerReview {
+//   name: string;
+//   path: string;
+//   alt: string;
+//   message: string;
+//   instansi: string;
+// }
+
+type CustomerReviewData = {
+  id: string;
   name: string;
-  path: string;
-  alt: string;
   message: string;
-  instansi: string;
-}
+  instansi?: string | null;
+  gender: string;
+  avatar?: string | null;
+  can_edit: boolean;
+  can_delete: boolean;
+  created_at: string;
+};
 
-const customerExp: CustomerExperience[] = [
-  {
-    name: "Budi",
-    path: "/assets/avatar-1.svg",
-    alt: "Avatar 1",
-    message:
-      "Pekerjaan nya bagus dan rapi, woooooow, jooooooooooooooooos, pokoknya weelllllllllllllllllllll, memuaskan pokoknya, sesuai ekspektasi",
-    instansi: "UGM",
-  },
-  {
-    name: "Joko",
-    path: "/assets/avatar-2.svg",
-    alt: "Avatar 2",
-    message: "Mantap pokok nya!!!",
-    instansi: "UNY",
-  },
-  {
-    name: "Agus",
-    path: "/assets/avatar-3.svg",
-    alt: "Avatar 3",
-    message:
-      "Terpercaya, hasil maksimal, mantap pokoknya, josss super, bersih, pokoknya terbaik bagus banget harus cobain gak usah ragu langsung datang ke sotta souvenir",
-    instansi: "Pupuk Kaltim",
-  },
-  {
-    name: "Ari",
-    path: "/assets/avatar-4.svg",
-    alt: "Avatar 4",
-    message: "Keren pokoknya!!!",
-    instansi: "Unnes",
-  },
-  {
-    name: "Adi",
-    path: "/assets/avatar-5.svg",
-    alt: "Avatar 5",
-    message: "Hasil tidak mengecewakan",
-    instansi: "Moonton Mobile Legend",
-  },
-  {
-    name: "Doni",
-    path: "/assets/avatar-6.svg",
-    alt: "Avatar 6",
-    message: "Bakal order disini lagi",
-    instansi: "UII",
-  },
-  {
-    name: "Dodi",
-    path: "/assets/avatar-7.svg",
-    alt: "Avatar 7",
-    message: "Kerjaan rapi, sesuai ekspektasi",
-    instansi: "UniPin",
-  },
-  {
-    name: "Joni",
-    path: "/assets/avatar-1.svg",
-    alt: "Avatar 8",
-    message: "Wow bagus sekali",
-    instansi: "UGM",
-  },
-  {
-    name: "Yuli",
-    path: "/assets/avatar-5.svg",
-    alt: "Avatar 9",
-    message: "Hasil mantap",
-    instansi: "UNY",
-  },
-  {
-    name: "Rini",
-    path: "/assets/avatar-6.svg",
-    alt: "Avatar 10",
-    message: "Rekomended!!!",
-    instansi: "Pertamina",
-  },
-  {
-    name: "Susi",
-    path: "/assets/avatar-7.svg",
-    alt: "Avatar 11",
-    message: "Keren gak nyangka",
-    instansi: "",
-  },
-  {
-    name: "Rufi",
-    path: "/assets/avatar-1.svg",
-    alt: "Avatar 12",
-    message: "Joooooooossssssssssssssss",
-    instansi: "UAD",
-  },
-];
+const MAX_AVATAR_SIZE = 1 * 1024 * 1024;
+const MAX_AVATAR_WIDTH = 300;
+const MAX_AVATAR_HEIGHT = 300;
 
-const custExpSchema = z.object({
-  nama: z.string().min(1, "Nama wajib diisi"),
+const custReviewSchema = z.object({
+  name: z.string().min(1, "Nama wajib diisi"),
   instansi: z.string().optional(),
   message: z.string().min(1, "Message tidak boleh kosong"),
+  gender: z.enum(["laki-laki", "perempuan"], {
+    required_error: "Jenis kelamin wajib dipilih",
+  }),
+  avatar: z
+    .any()
+    .optional()
+    .refine(
+      (file) => !file?.length || file?.[0]?.type?.startsWith("image/"),
+      "File harus berupa gambar"
+    )
+    .refine(
+      (file) => !file?.length || file?.[0]?.size <= MAX_AVATAR_SIZE,
+      "Ukuran avatar maksimal 1MB"
+    ),
 });
 
-type CustomerExpForm = z.infer<typeof custExpSchema>;
+async function validateAvatarResolution(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader: FileReader = new FileReader();
+    reader.onload = () => {
+      const img: HTMLImageElement = new Image();
+      img.onload = () => {
+        if (img.width > MAX_AVATAR_WIDTH || img.height > MAX_AVATAR_HEIGHT) {
+          resolve(
+            `Resolusi avatar maksimal ${MAX_AVATAR_WIDTH}x${MAX_AVATAR_HEIGHT}px`
+          );
+        } else {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve("Gagal membaca gambar.");
+      img.src = reader.result as string;
+    };
+    reader.onerror = () => resolve("Gagal membaca file.");
+    reader.readAsDataURL(file);
+  });
+}
 
-export default function CustomerExp() {
-  const [visibleCustomerExp, setVisibleCustomerExp] = useState(3);
+type CustomerReviewForm = z.infer<typeof custReviewSchema>;
+
+export default function CustomerReview() {
+  const [visibleCustomerReview, setVisibleCustomerReview] = useState(3);
+  const [isLoadingCustomerReviews, setIsLoadingCustomerReviews] = useState<boolean>(false);
+  const [customerReviewsData, setCustomerReviewsData] = useState<CustomerReviewData[]>([]);
+   const [paginationInfo, setPaginationInfo] = useState<{
+    current_page: number;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+    last_page: number;
+    total: number;
+  }>({
+    current_page: 1,
+    next_page_url: null,
+    prev_page_url: null,
+    last_page: 1,
+    total: 0,
+  });
+  const [selectedReview, setSelectedReview] =
+    useState<CustomerReviewData | null>(null);
   const [isExpanded, setIsExpanded] = useState<Record<string, boolean>>({});
+
+  const fetchCustomerReview = async (page = 1, per_page = 4, search = "") => {
+    try {
+      setIsLoadingCustomerReviews(true);
+      const data = await getCustomerReviews({
+        page,
+        per_page,
+        search,
+      });
+      setCustomerReviewsData(data.data);
+      setPaginationInfo({
+        current_page: data.current_page,
+        next_page_url: data.next_page_url,
+        prev_page_url: data.prev_page_url,
+        last_page: data.last_page,
+        total: data.total,
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch customer reviews", error);
+    } finally {
+      setIsLoadingCustomerReviews(false);
+    }
+  }
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CustomerExpForm>({
-    resolver: zodResolver(custExpSchema),
+    reset,
+  } = useForm<CustomerReviewForm>({
+    resolver: zodResolver(custReviewSchema),
+    defaultValues: {
+      gender: "laki-laki",
+    },
   });
 
-  const onSubmit = (data: CustomerExpForm) => {
-    console.log("Submit to api", data);
-  };
+  const onSubmit = async (data: CustomerReviewForm) => {
+    let avatarFile = data.avatar?.[0];
 
-  const groupCustomerExperiences = (
-    experiences: typeof customerExp,
-    groupSize: number
-  ) => {
-    if (!Array.isArray(experiences) || experiences.length === 0) {
-      return [];
+    if (avatarFile) {
+      const resolutionError = await validateAvatarResolution(avatarFile);
+      if (resolutionError) {
+        alert(resolutionError);
+        return;
+      }
     }
 
-    if (groupSize <= 0) {
-      throw new Error("Group size must be greater than 0");
+    // const mappedGender = data.gender === "laki-laki" ? "male" : "female";
+
+    let token = localStorage.getItem("customer_review_token");
+    if (!token) {
+      token = uuidv4();
+      localStorage.setItem("customer_review_token", token);
     }
 
-    const groups: CustomerExperience[][] = [];
-    for (let i = 0; i < experiences.length; i += groupSize) {
-      groups.push(experiences.slice(i, i + groupSize));
+    const basePayload = {
+      name: data.name,
+      message: data.message,
+      instansi: data.instansi,
+      gender: data.gender,
+      token,
+    };
+
+    try {
+      if (selectedReview && token) {
+        // await updateReview(basePayload, { params: { id: id } });
+        ToastWithProgress({
+          title: "Berhasil",
+          description: "Data review berhasil diperbarui.",
+          duration: 3000,
+          type: "success",
+        });
+      } else {
+        await createCustomerReview(basePayload);
+        ToastWithProgress({
+          title: "Berhasil",
+          description: "Data review berhasil disimpan.",
+          duration: 3000,
+          type: "success",
+        });
+        reset();
+      }
+    } catch (error: any) {
+      console.log(error);
+      ToastWithProgress({
+        title: "Gagal",
+        description: selectedReview
+          ? "Gagal memperbarui data review."
+          : "Gagal memyimpan data review.",
+        duration: 3000,
+        type: "error",
+      });
     }
-
-    return groups;
   };
 
-  const groupedCustomerExperiences = groupCustomerExperiences(customerExp, 2);
-  const visibleCustomerExperiences = groupedCustomerExperiences.slice(
-    0,
-    visibleCustomerExp
-  );
+  // const groupCustomerReview = (
+  //   reviews: typeof CustomerReviewData,
+  //   groupSize: number
+  // ) => {
+  //   if (!Array.isArray(reviews) || reviews.length === 0) {
+  //     return [];
+  //   }
 
-  const handleLoadCustomerExp = () => {
-    setVisibleCustomerExp((prev) => prev + 3);
-  };
+  //   if (groupSize <= 0) {
+  //     throw new Error("Group size must be greater than 0");
+  //   }
+
+  //   const groups: CustomerReviewData[][] = [];
+  //   for (let i = 0; i < reviews.length; i += groupSize) {
+  //     groups.push(reviews.slice(i, i + groupSize));
+  //   }
+
+  //   return groups;
+  // };
+
+  // const groupedCustomerReview = groupCustomerReview(CustomerReviewData, 2);
+  // const visibleGroupedCustomerReview = groupedCustomerReview.slice(
+  //   0,
+  //   visibleCustomerReview
+  // );
+
+  // const handleLoadCustomerReview = () => {
+  //   setVisibleCustomerReview((prev) => prev + 3);
+  // };
 
   const toggleExpand = (name: string) => {
     setIsExpanded((prev) => ({
@@ -176,14 +242,30 @@ export default function CustomerExp() {
             <div>
               <Input
                 placeholder="Nama"
-                {...register("nama")}
-                aria-invalid={!!errors.nama}
+                {...register("name")}
+                aria-invalid={!!errors.name}
               />
-              {errors.nama && (
+              {errors.name && (
                 <p className="px-2 pt-2 text-red-500 text-xs text-left">
-                  {errors.nama.message}
+                  {errors.name.message}
                 </p>
               )}
+            </div>
+            <div>
+              <label
+                htmlFor="gender"
+                className="text-sm font-medium text-stone-900"
+              >
+                Jenis Kelamin
+              </label>
+              <select
+                {...register("gender")}
+                defaultValue="laki-laki"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="laki-laki">Laki-laki</option>
+                <option value="perempuan">Perempuan</option>
+              </select>
             </div>
             <div>
               <Input placeholder="Instansi" {...register("instansi")} />
@@ -205,13 +287,13 @@ export default function CustomerExp() {
             <Button variant="full">Send</Button>
           </form>
         </div>
-        <div className="w-full md:w-2/3">
+        {/* <div className="w-full md:w-2/3">
           <div className="overflow-hidden h-[50vh] relative">
             <div className="flex flex-col overflow-auto h-[50vh]">
-              {visibleCustomerExperiences.map((group, groupIndex) => (
+              {visibleGroupedCustomerReview.map((group, groupIndex) => (
                 <div key={groupIndex} className="py-2 h-full w-full px-4">
                   <div className="flex justify-between gap-6">
-                    {group.map((item: CustomerExperience) => (
+                    {group.map((item: CustomerReviewData) => (
                       <div
                         key={item.name}
                         className="flex flex-col md:flex-row items-start bg-white shadow-xl rounded-md p-4 
@@ -257,11 +339,11 @@ export default function CustomerExp() {
                 </div>
               ))}
               <div>
-                <Button onClick={handleLoadCustomerExp}>More</Button>
+                <Button onClick={handleLoadCustomerReview}>More</Button>
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );
