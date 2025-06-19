@@ -132,8 +132,6 @@ export function Table<T extends Record<string, unknown>>({
   const [startX, setStartX] = useState<number>(0);
   const [scrollLeft, setScrollLeft] = useState<number>(0);
 
-  console.log("Data yang diterima di tabel", data);
-
   const headers = Object.keys(data?.[0] || {});
   const isEvenNumber = (num: number) => num % 2 === 0;
   // const totalPages = Math.ceil(data.length / rowsPerPage);

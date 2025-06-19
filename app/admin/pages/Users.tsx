@@ -36,6 +36,7 @@ type UserTable = {
   role_name: string;
 };
 
+// Tipe untuk dikirim ke user form
 type UserData = {
   id_user: string;
   name: string;
@@ -68,11 +69,12 @@ const transformUserTable = (user: any): UserTable => ({
   role_name: user.role.name,
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const transformUserData = (user: any): UserData => ({
   id_user: user.id_user,
   name: user.name,
   email: user.email,
-  gender: mapGenderFromAPI(user.gender),
+  gender: user.gender.value.toLowerCase(),
   avatar: user.avatar,
   phone_number: user.phone_number,
   role: {
@@ -103,7 +105,7 @@ export default function Users() {
   const [searchQuery, setSearchQuery] = useState("");
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
-  console.log(paginationInfo);
+  console.log("selected", userData)
 
   const fetchUser = async (page = 1, per_page = userPerPage, search = "") => {
     try {
@@ -113,7 +115,6 @@ export default function Users() {
         per_page,
         search,
       });
-      console.log("data", data.data);
       setUserData(data.data.map(transformUserTable));
       setPaginationInfo({
         current_page: data.current_page,
@@ -144,6 +145,7 @@ export default function Users() {
 
   useEffect(() => {
     fetchUser(paginationInfo.current_page, userPerPage, searchQuery);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPerPage, searchQuery]);
 
   useEffect(() => {
@@ -160,7 +162,6 @@ export default function Users() {
   async function handleEdit(id_user: string) {
     try {
       const data = await getUserById({ id: id_user });
-      console.log("res", data);
       setSelectedUser(transformUserData(data));
       setIsFormDialogOpen(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

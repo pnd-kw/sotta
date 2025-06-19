@@ -12,12 +12,12 @@ import { z } from "zod";
 
 interface UserFormProps {
   userId: string | undefined;
-  initialData?: User | null;
+  initialData?: UserData | null;
 }
 
 type Gender = "laki-laki" | "perempuan";
 
-type User = {
+type UserData = {
   id_user: string;
   name: string;
   email: string;
@@ -28,12 +28,25 @@ type User = {
     id: number;
     name: string;
   };
-  role_id: number;
-  password: string;
-  password_confirmation: string;
-  created_at: string;
-  updated_at: string;
 };
+
+// type User = {
+//   id_user: string;
+//   name: string;
+//   email: string;
+//   gender: Gender;
+//   avatar: string;
+//   phone_number: string;
+//   role: {
+//     id: number;
+//     name: string;
+//   };
+//   role_id: number;
+//   password: string;
+//   password_confirmation: string;
+//   created_at: string;
+//   updated_at: string;
+// };
 
 const role = [
   { id: 2, name: "admin" },
@@ -144,6 +157,8 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
 
   // const prevUserIdRef = useRef<string | null>(null);
 
+  console.log("init", initialData);
+
   useEffect(() => {
     if (initialData) {
       reset({
@@ -210,12 +225,6 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
       role_id: data.role.id,
       // password: data.password,
       // password_confirmation: data.password_confirmation,
-    };
-
-    const cleanPayload = (payload: Record<string, unknown>) => {
-      return Object.fromEntries(
-        Object.entries(payload).filter(([, v]) => v !== undefined)
-      );
     };
 
     try {
@@ -384,15 +393,12 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
         </label>
         <select
           id="role"
-          // {...register("role", {
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             const selected = role.find((role) => role.id === selectedId);
 
-            console.log("Role dipilih", selected);
             if (selected) setValue("role", selected);
           }}
-          // })}
           value={watch("role")?.id || ""}
           className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
         >
@@ -449,7 +455,7 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
       </div>
       <div className="flex justify-end">
         <Button variant="green">
-          {userId !== null ? "Perbarui" : "Simpan"}
+          {isEditMode ? "Perbarui" : "Simpan"}
         </Button>
       </div>
     </form>
