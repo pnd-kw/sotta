@@ -29,7 +29,7 @@ interface PaginatedCustomerReviewResponse {
 
 export const getCustomerReviews = async ({
   page = 1,
-  per_page = 4,
+  per_page = 10,
   search = "",
 }: {
   page?: number;
@@ -38,7 +38,7 @@ export const getCustomerReviews = async ({
 } = {}): Promise<PaginatedCustomerReviewResponse> => {
   try {
     const response = await axiosInstance.get<PaginatedCustomerReviewResponse>(
-      "api/customer-reviews",
+      "/api/customer-reviews",
       {
         params: {
           page,
@@ -49,6 +49,7 @@ export const getCustomerReviews = async ({
     );
 
     return response.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.response) {
       const errorMessage =

@@ -105,8 +105,6 @@ export default function Users() {
   const [searchQuery, setSearchQuery] = useState("");
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
-  console.log("selected", userData)
-
   const fetchUser = async (page = 1, per_page = userPerPage, search = "") => {
     try {
       setIsLoadingUser(true);

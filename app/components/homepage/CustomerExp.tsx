@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -80,9 +80,12 @@ type CustomerReviewForm = z.infer<typeof custReviewSchema>;
 
 export default function CustomerReview() {
   const [visibleCustomerReview, setVisibleCustomerReview] = useState(3);
-  const [isLoadingCustomerReviews, setIsLoadingCustomerReviews] = useState<boolean>(false);
-  const [customerReviewsData, setCustomerReviewsData] = useState<CustomerReviewData[]>([]);
-   const [paginationInfo, setPaginationInfo] = useState<{
+  const [isLoadingCustomerReviews, setIsLoadingCustomerReviews] =
+    useState<boolean>(false);
+  const [customerReviewsData, setCustomerReviewsData] = useState<
+    CustomerReviewData[]
+  >([]);
+  const [paginationInfo, setPaginationInfo] = useState<{
     current_page: number;
     next_page_url: string | null;
     prev_page_url: string | null;
@@ -95,10 +98,16 @@ export default function CustomerReview() {
     last_page: 1,
     total: 0,
   });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [customerReviewsPerPage, setCustomerReviewsPerPage] = useState(10);
   const [selectedReview, setSelectedReview] =
     useState<CustomerReviewData | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [searchQuery, setSearchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState<Record<string, boolean>>({});
 
+  console.log(customerReviewsData);
+  
   const fetchCustomerReview = async (page = 1, per_page = 4, search = "") => {
     try {
       setIsLoadingCustomerReviews(true);
@@ -107,6 +116,7 @@ export default function CustomerReview() {
         per_page,
         search,
       });
+      console.log("data", data);
       setCustomerReviewsData(data.data);
       setPaginationInfo({
         current_page: data.current_page,
@@ -115,12 +125,22 @@ export default function CustomerReview() {
         last_page: data.last_page,
         total: data.total,
       });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to fetch customer reviews", error);
     } finally {
       setIsLoadingCustomerReviews(false);
     }
-  }
+  };
+
+  useEffect(() => {
+    fetchCustomerReview(
+      paginationInfo.current_page,
+      customerReviewsPerPage,
+      searchQuery
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerReviewsPerPage, searchQuery]);
 
   const {
     register,
@@ -145,7 +165,7 @@ export default function CustomerReview() {
       }
     }
 
-    // const mappedGender = data.gender === "laki-laki" ? "male" : "female";
+    const mappedGender = data.gender === "laki-laki" ? "male" : "female";
 
     let token = localStorage.getItem("customer_review_token");
     if (!token) {
@@ -157,7 +177,7 @@ export default function CustomerReview() {
       name: data.name,
       message: data.message,
       instansi: data.instansi,
-      gender: data.gender,
+      gender: mappedGender,
       token,
     };
 
@@ -180,6 +200,7 @@ export default function CustomerReview() {
         });
         reset();
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.log(error);
       ToastWithProgress({
@@ -193,35 +214,35 @@ export default function CustomerReview() {
     }
   };
 
-  // const groupCustomerReview = (
-  //   reviews: typeof CustomerReviewData,
-  //   groupSize: number
-  // ) => {
-  //   if (!Array.isArray(reviews) || reviews.length === 0) {
-  //     return [];
-  //   }
+  const groupCustomerReview = (
+    reviews: CustomerReviewData[],
+    groupSize: number
+  ) => {
+    if (!Array.isArray(reviews) || reviews.length === 0) {
+      return [];
+    }
 
-  //   if (groupSize <= 0) {
-  //     throw new Error("Group size must be greater than 0");
-  //   }
+    if (groupSize <= 0) {
+      throw new Error("Group size must be greater than 0");
+    }
 
-  //   const groups: CustomerReviewData[][] = [];
-  //   for (let i = 0; i < reviews.length; i += groupSize) {
-  //     groups.push(reviews.slice(i, i + groupSize));
-  //   }
+    const groups: CustomerReviewData[][] = [];
+    for (let i = 0; i < reviews.length; i += groupSize) {
+      groups.push(reviews.slice(i, i + groupSize));
+    }
 
-  //   return groups;
-  // };
+    return groups;
+  };
 
-  // const groupedCustomerReview = groupCustomerReview(CustomerReviewData, 2);
-  // const visibleGroupedCustomerReview = groupedCustomerReview.slice(
-  //   0,
-  //   visibleCustomerReview
-  // );
+  const groupedCustomerReview = groupCustomerReview(customerReviewsData, 2);
+  const visibleGroupedCustomerReview = groupedCustomerReview.slice(
+    0,
+    visibleCustomerReview
+  );
 
-  // const handleLoadCustomerReview = () => {
-  //   setVisibleCustomerReview((prev) => prev + 3);
-  // };
+  const handleLoadCustomerReview = () => {
+    setVisibleCustomerReview((prev) => prev + 3);
+  };
 
   const toggleExpand = (name: string) => {
     setIsExpanded((prev) => ({
@@ -287,7 +308,7 @@ export default function CustomerReview() {
             <Button variant="full">Send</Button>
           </form>
         </div>
-        {/* <div className="w-full md:w-2/3">
+        <div className="w-full md:w-2/3">
           <div className="overflow-hidden h-[50vh] relative">
             <div className="flex flex-col overflow-auto h-[50vh]">
               {visibleGroupedCustomerReview.map((group, groupIndex) => (
@@ -300,12 +321,12 @@ export default function CustomerReview() {
                       text-left min-h-[4rem] w-full transition-transform duration-300 hover:scale-105"
                       >
                         <div className="relative w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-full bg-stone-200">
-                          <Image
+                          {/* <Image
                             src={item.path}
                             alt={item.alt}
                             fill
                             className="object-cover"
-                          />
+                          /> */}
                         </div>
                         <div className="flex flex-col px-2 py-2 items-start text-justify">
                           <div className="text-left text-sm font-semibold">
@@ -343,7 +364,7 @@ export default function CustomerReview() {
               </div>
             </div>
           </div>
-        </div> */}
+        </div>
       </div>
     </section>
   );

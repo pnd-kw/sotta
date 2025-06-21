@@ -35,7 +35,7 @@ interface PaginatedUserResponse {
 
 export const getUsers = async ({
   page = 1,
-  per_page = 8,
+  per_page = 10,
   search = "",
 }: {
   page?: number;
