@@ -142,9 +142,16 @@ export default function Users() {
   // }, [searchQuery]);
 
   useEffect(() => {
-    fetchUser(paginationInfo.current_page, userPerPage, searchQuery);
+    fetchUser(paginationInfo.current_page, userPerPage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userPerPage, searchQuery]);
+  }, [userPerPage]);
+
+   useEffect(() => {
+    if (searchQuery.trim() === "") {
+      fetchUser(1, userPerPage, "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   useEffect(() => {
     const resetGalleryIfEmpty = async () => {

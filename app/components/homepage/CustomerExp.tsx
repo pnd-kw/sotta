@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,15 @@ import ToastWithProgress from "@/utils/ToastWithProgress";
 import { createCustomerReview } from "@/app/api/customer_review/createCustomerReview";
 import { v4 as uuidv4 } from "uuid";
 import { getCustomerReviews } from "@/app/api/customer_review/getCustomerReviews";
+import { FaEdit } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
+import ImageAlertDialog, {
+  ImageAlertDialogHandle,
+} from "@/utils/ImageAlertDialog";
+import BouncingImage from "@/utils/BouncingImage";
+import { deleteCustomerReview } from "@/app/api/customer_review/deleteCustomerReview";
+import { updateCustomerReview } from "@/app/api/customer_review/updateCustomerReview";
+import Spinner from "@/utils/Spinner";
 
 // interface CustomerReview {
 //   name: string;
@@ -25,6 +34,7 @@ type CustomerReviewData = {
   instansi?: string | null;
   gender: string;
   avatar?: string | null;
+  token: string;
   can_edit: boolean;
   can_delete: boolean;
   created_at: string;
@@ -100,14 +110,24 @@ export default function CustomerReview() {
   });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [customerReviewsPerPage, setCustomerReviewsPerPage] = useState(10);
-  const [selectedReview, setSelectedReview] =
-    useState<CustomerReviewData | null>(null);
+  const [selectedReview, setSelectedReview] = useState<CustomerReviewData>({
+    id: "",
+    name: "",
+    message: "",
+    instansi: null,
+    gender: "laki-laki",
+    avatar: null,
+    token: "",
+    can_edit: false,
+    can_delete: false,
+    created_at: "",
+  });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchQuery, setSearchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState<Record<string, boolean>>({});
+  const [storedToken, setStoredToken] = useState<string | null>("");
+  const dialog = useRef<ImageAlertDialogHandle>(null);
 
-  console.log(customerReviewsData);
-  
   const fetchCustomerReview = async (page = 1, per_page = 4, search = "") => {
     try {
       setIsLoadingCustomerReviews(true);
@@ -116,7 +136,6 @@ export default function CustomerReview() {
         per_page,
         search,
       });
-      console.log("data", data);
       setCustomerReviewsData(data.data);
       setPaginationInfo({
         current_page: data.current_page,
@@ -139,8 +158,13 @@ export default function CustomerReview() {
       customerReviewsPerPage,
       searchQuery
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerReviewsPerPage, searchQuery]);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("customer_review_token");
+    setStoredToken(storedToken);
+  }, []);
 
   const {
     register,
@@ -182,8 +206,10 @@ export default function CustomerReview() {
     };
 
     try {
-      if (selectedReview && token) {
-        // await updateReview(basePayload, { params: { id: id } });
+      if (selectedReview && token && selectedReview.id) {
+        await updateCustomerReview(basePayload, {
+          params: { id: selectedReview.id },
+        });
         ToastWithProgress({
           title: "Berhasil",
           description: "Data review berhasil diperbarui.",
@@ -213,6 +239,58 @@ export default function CustomerReview() {
       });
     }
   };
+
+  function handleEdit(token: string) {
+    const review = customerReviewsData.find((item) => item.token === token);
+    if (review) {
+      setSelectedReview(review);
+      reset({
+        name: review.name,
+        instansi: review.instansi ?? "",
+        message: review.message,
+        gender: review.gender === "male" ? "laki-laki" : "perempuan",
+        avatar: undefined,
+      });
+    }
+  }
+
+  function handleGetTargetReview(token: string) {
+    const review = customerReviewsData.find((item) => item.token === token);
+    if (review) {
+      setSelectedReview(review);
+      dialog.current?.openDialog();
+    }
+  }
+
+  async function handleDelete(id: string, token: string) {
+    if (!id) {
+      ToastWithProgress({
+        title: "Gagal",
+        description: "ID review tidak ditemukan",
+        duration: 3000,
+        type: "error",
+      });
+      return;
+    }
+    try {
+      await deleteCustomerReview(id, token);
+      ToastWithProgress({
+        title: "Berhasil",
+        description: `Berhasil menghapus data review ${id}`,
+        duration: 3000,
+        type: "success",
+      });
+      localStorage.removeItem("customer_review_token");
+    } catch (error) {
+      console.error("Failed to delete data review", error);
+      ToastWithProgress({
+        title: "Gagal",
+        description: `Gagal menghapus data review ${id}`,
+        duration: 3000,
+        type: "error",
+      });
+    }
+  }
 
   const groupCustomerReview = (
     reviews: CustomerReviewData[],
@@ -252,120 +330,165 @@ export default function CustomerReview() {
   };
 
   return (
-    <section id="customer exp" className="text-center py-10 w-full">
-      <h3 className="text-xl md:text-2xl text-[#85582c] font-semibold mb-2 py-4">
-        Customers Experience
-      </h3>
-      <div className="flex flex-col md:flex-row gap-6 w-full max-w-screen-xl mx-auto px-4">
-        <div className="w-full md:w-1/3 bg-stone-200 shadow-xl rounded-lg p-6">
-          <h4 className="text-lg pb-4">Write your experience</h4>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Input
-                placeholder="Nama"
-                {...register("name")}
-                aria-invalid={!!errors.name}
-              />
-              {errors.name && (
-                <p className="px-2 pt-2 text-red-500 text-xs text-left">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="gender"
-                className="text-sm font-medium text-stone-900"
+    <>
+      <section id="customer exp" className="text-center py-10 w-full">
+        <h3 className="text-xl md:text-2xl text-[#85582c] font-semibold mb-2 py-4">
+          Customers Experience
+        </h3>
+        <div className="flex flex-col md:flex-row gap-6 w-full max-w-screen-xl mx-auto px-4">
+          <div className="w-full md:w-1/3 bg-stone-200 shadow-xl rounded-lg p-6">
+            <h4 className="text-lg pb-4">Write your experience</h4>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Nama"
+                  {...register("name")}
+                  aria-invalid={!!errors.name}
+                />
+                {errors.name && (
+                  <p className="px-2 pt-2 text-red-500 text-xs text-left">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <select
+                  {...register("gender")}
+                  defaultValue="laki-laki"
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  <option value="laki-laki">Laki-laki</option>
+                  <option value="perempuan">Perempuan</option>
+                </select>
+              </div>
+              <div>
+                <Input placeholder="Instansi" {...register("instansi")} />
+              </div>
+              <div>
+                <Input
+                  textarea
+                  placeholder="Message"
+                  maxLength={150}
+                  {...register("message")}
+                  aria-invalid={!!errors.message}
+                />
+                {errors.message && (
+                  <p className="px-2 pt-2 text-red-500 text-xs text-left">
+                    {errors.message.message}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="full"
+                className={`${
+                  selectedReview.token ? "bg-[#85582c]" : "bg-black"
+                }`}
               >
-                Jenis Kelamin
-              </label>
-              <select
-                {...register("gender")}
-                defaultValue="laki-laki"
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="laki-laki">Laki-laki</option>
-                <option value="perempuan">Perempuan</option>
-              </select>
-            </div>
-            <div>
-              <Input placeholder="Instansi" {...register("instansi")} />
-            </div>
-            <div>
-              <Input
-                textarea
-                placeholder="Message"
-                maxLength={150}
-                {...register("message")}
-                aria-invalid={!!errors.message}
-              />
-              {errors.message && (
-                <p className="px-2 pt-2 text-red-500 text-xs text-left">
-                  {errors.message.message}
-                </p>
-              )}
-            </div>
-            <Button variant="full">Send</Button>
-          </form>
-        </div>
-        <div className="w-full md:w-2/3">
-          <div className="overflow-hidden h-[50vh] relative">
-            <div className="flex flex-col overflow-auto h-[50vh]">
-              {visibleGroupedCustomerReview.map((group, groupIndex) => (
-                <div key={groupIndex} className="py-2 h-full w-full px-4">
-                  <div className="flex justify-between gap-6">
-                    {group.map((item: CustomerReviewData) => (
-                      <div
-                        key={item.name}
-                        className="flex flex-col md:flex-row items-start bg-white shadow-xl rounded-md p-4 
-                      text-left min-h-[4rem] w-full transition-transform duration-300 hover:scale-105"
-                      >
-                        <div className="relative w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-full bg-stone-200">
-                          {/* <Image
-                            src={item.path}
-                            alt={item.alt}
-                            fill
-                            className="object-cover"
-                          /> */}
-                        </div>
-                        <div className="flex flex-col px-2 py-2 items-start text-justify">
-                          <div className="text-left text-sm font-semibold">
-                            {item.name} - {item.instansi}
-                          </div>
+                {selectedReview.token ? "Resend" : "Send"}
+              </Button>
+            </form>
+          </div>
+          <div className="w-full md:w-2/3">
+            {isLoadingCustomerReviews ? (
+              <Spinner />
+            ) : (
+              <div className="overflow-hidden h-[65vh] relative">
+                <div className="flex flex-col overflow-auto h-[65vh]">
+                  {visibleGroupedCustomerReview.map((group, groupIndex) => (
+                    <div key={groupIndex} className="py-2 h-full w-full px-4">
+                      <div className="flex justify-between gap-6">
+                        {group.map((item: CustomerReviewData) => (
                           <div
-                            className={`text-[0.7rem] max-w-[8rem] min-h-[4rem] ${
-                              !isExpanded[item.name] ? "truncate" : ""
-                            }`}
+                            key={item.name}
+                            className="flex flex-col md:flex-row items-start bg-white shadow-xl rounded-md p-4 
+                      text-left min-h-[4rem] w-full transition-transform duration-300 hover:scale-105"
                           >
-                            &quot;
-                            {item.message.length > 150
-                              ? item.message.slice(0, 150)
-                              : item.message}
-                            &quot;
+                            <div className="relative w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-full bg-stone-200">
+                              <Image
+                                src={
+                                  item.gender === "male"
+                                    ? "/assets/avatar-1.svg"
+                                    : "/assets/avatar-2.svg"
+                                }
+                                alt={`${item.name} - ${item.instansi} image`}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="flex flex-col w-[16vw] px-2 py-2 items-start text-justify">
+                              <div className="flex w-[16vw] items-center justify-between">
+                                <div className="text-left text-sm font-semibold">
+                                  {item.name} - {item.instansi}
+                                </div>
+                                {item.token === storedToken ? (
+                                  <div className="flex">
+                                    <Button
+                                      variant="transAmberText"
+                                      onClick={() => handleEdit(item.token)}
+                                    >
+                                      <FaEdit />
+                                    </Button>
+                                    <Button
+                                      variant="transRedText"
+                                      onClick={() =>
+                                        handleGetTargetReview(item.token)
+                                      }
+                                    >
+                                      <MdDelete />
+                                    </Button>
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div
+                                className={`text-[0.7rem] max-w-[8rem] min-h-[4rem] ${
+                                  !isExpanded[item.name] ? "truncate" : ""
+                                }`}
+                              >
+                                &quot;
+                                {item.message.length > 150
+                                  ? item.message.slice(0, 150)
+                                  : item.message}
+                                &quot;
+                              </div>
+                              {item.message.length > 40 && (
+                                <Button
+                                  onClick={() => toggleExpand(item.name)}
+                                  className="text-xs mt-1"
+                                >
+                                  {isExpanded[item.name]
+                                    ? "Sembunyikan"
+                                    : "Lihat lebih"}
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                          {item.message.length > 40 && (
-                            <Button
-                              onClick={() => toggleExpand(item.name)}
-                              className="text-xs mt-1"
-                            >
-                              {isExpanded[item.name]
-                                ? "Sembunyikan"
-                                : "Lihat lebih"}
-                            </Button>
-                          )}
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                  <div>
+                    <Button onClick={handleLoadCustomerReview}>More</Button>
                   </div>
                 </div>
-              ))}
-              <div>
-                <Button onClick={handleLoadCustomerReview}>More</Button>
               </div>
-            </div>
+            )}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+      <ImageAlertDialog
+        ref={dialog}
+        alertImage={
+          <BouncingImage
+            image="/assets/exclamation-red-icon.svg"
+            alt="Delete warning image"
+            width={120}
+            height={120}
+          />
+        }
+        title="Peringatan"
+        content={`Apakah anda ingin menghapus review ${selectedReview?.name} - ${selectedReview?.instansi} : ${selectedReview?.message} ?`}
+        button={() => handleDelete(selectedReview?.id, selectedReview?.token)}
+      />
+    </>
   );
 }

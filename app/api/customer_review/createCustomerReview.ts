@@ -1,6 +1,6 @@
 import axiosInstance from "../axiosInstance";
 
-interface CustomerReviewPayload {
+interface CustomerReviewData {
   name: string;
   message: string;
   instansi?: string;
@@ -10,20 +10,20 @@ interface CustomerReviewPayload {
 }
 
 export const createCustomerReview = async (
-  customerReviewPayload: CustomerReviewPayload
+  customerReviewData: CustomerReviewData
 ) => {
   const formData = new FormData();
-  formData.append("name", customerReviewPayload.name);
-  formData.append("message", customerReviewPayload.message);
-  formData.append("gender", customerReviewPayload.gender);
-  formData.append("token", customerReviewPayload.token);
+  formData.append("name", customerReviewData.name);
+  formData.append("message", customerReviewData.message);
+  formData.append("gender", customerReviewData.gender);
+  formData.append("token", customerReviewData.token);
 
-  if (customerReviewPayload.instansi) {
-    formData.append("instansi", customerReviewPayload.instansi);
+  if (customerReviewData.instansi) {
+    formData.append("instansi", customerReviewData.instansi);
   }
 
-  if (customerReviewPayload.avatar) {
-    formData.append("avatar", customerReviewPayload.avatar);
+  if (customerReviewData.avatar) {
+    formData.append("avatar", customerReviewData.avatar);
   }
 
   try {
@@ -38,6 +38,7 @@ export const createCustomerReview = async (
     );
 
     return response.data;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.response) {
       const errorMessage =

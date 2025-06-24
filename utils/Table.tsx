@@ -51,6 +51,9 @@ interface TableProps<T> {
   totalPage?: number;
   onPageChange?: (page: number) => void;
   onRowsPerPageChange?: (page: number) => void;
+  customBooleanRender?: {
+    [K in keyof T]?: (value: boolean, row: T) => React.ReactNode;
+  }
 }
 
 function formatHeader(key: string): string {
@@ -118,10 +121,10 @@ export function Table<T extends Record<string, unknown>>({
   totalPage = 1,
   onPageChange,
   onRowsPerPageChange,
+  customBooleanRender = {},
 }: TableProps<T>): JSX.Element {
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [orderBy, setOrderBy] = useState<string>(defaultSortBy);
-  const [rowsPerPage, setRowsPerPage] = useState<number>(perPage);
   // const [page, setPage] = useState<number>(0);
   const [hoveredColumn, setHoveredColumn] = useState<string | null>(null);
   const [pinnedColumn, setPinnedColumn] = useState<PinnedColumn[]>([
@@ -157,7 +160,7 @@ export function Table<T extends Record<string, unknown>>({
     if (!Array.isArray(data) || data.length === 0) return [];
     return [...data].sort(getComparator(order, orderBy));
     // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  }, [data, order, orderBy, page, rowsPerPage]);
+  }, [data, order, orderBy]);
 
   const activeIconButtons = useMemo(
     () => listIconButton.filter((btn: IconButton<T>) => btn.value === true),
@@ -401,9 +404,10 @@ export function Table<T extends Record<string, unknown>>({
                       >
                         {isDateField(key) ? (
                           <DateTime date={item[key] as string} />
+                        ) : typeof item[key] === "boolean" && customBooleanRender?.[key] ? (
+                          customBooleanRender[key]?.(item[key] as boolean, item)
                         ) : typeof item[key] === "string" ||
                           typeof item[key] === "number" ||
-                          typeof item[key] === "boolean" ||
                           React.isValidElement(item[key]) ? (
                           (item[key] as React.ReactNode)
                         ) : (
@@ -422,7 +426,6 @@ export function Table<T extends Record<string, unknown>>({
         <RowsPerPageSelector
           value={perPage}
           onChange={(newVal) => {
-            setRowsPerPage(newVal);
             onRowsPerPageChange?.(newVal);
           }}
           total={data.length}

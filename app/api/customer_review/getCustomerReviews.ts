@@ -7,6 +7,7 @@ interface CustomerReviewResponse {
   instansi: string;
   gender: string;
   avatar?: string;
+  token: string;
   created_at: string;
   can_edit: boolean;
   can_delete: boolean;
@@ -47,6 +48,8 @@ export const getCustomerReviews = async ({
         },
       }
     );
+
+    console.log("res", response.data);
 
     return response.data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
