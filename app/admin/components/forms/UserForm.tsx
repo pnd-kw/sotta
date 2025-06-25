@@ -135,6 +135,8 @@ type UpdateUserForm = z.infer<ReturnType<typeof makeUserSchema>>;
 export default function UserForm({ userId, initialData }: UserFormProps) {
   const isEditMode = !!initialData;
 
+  const isSuperAdmin = initialData?.role.name === "superadmin";
+
   const {
     register,
     handleSubmit,
@@ -153,11 +155,6 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
   const [preview, setPreview] = useState<string>("/assets/avatar-1.svg");
 
   const watchAvatar = watch("avatar");
-  // const watchGender = watch("gender") as "laki-laki" | "perempuan";
-
-  // const prevUserIdRef = useRef<string | null>(null);
-
-  console.log("init", initialData);
 
   useEffect(() => {
     if (initialData) {
@@ -356,19 +353,24 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
           </p>
         )}
       </div>
-      <div>
-        <label htmlFor="gender" className="text-sm font-medium text-stone-900">
-          Jenis Kelamin <span className="text-red-500">*</span>
-        </label>
-        <select
-          {...register("gender")}
-          defaultValue="laki-laki"
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-        >
-          <option value="laki-laki">Laki-laki</option>
-          <option value="perempuan">Perempuan</option>
-        </select>
-      </div>
+      {!isSuperAdmin && (
+        <div>
+          <label
+            htmlFor="gender"
+            className="text-sm font-medium text-stone-900"
+          >
+            Jenis Kelamin <span className="text-red-500">*</span>
+          </label>
+          <select
+            {...register("gender")}
+            defaultValue="laki-laki"
+            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="laki-laki">Laki-laki</option>
+            <option value="perempuan">Perempuan</option>
+          </select>
+        </div>
+      )}
       <div>
         <label
           htmlFor="phone_number"
@@ -387,36 +389,38 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
           </p>
         )}
       </div>
-      <div>
-        <label htmlFor="role" className="text-sm font-medium text-stone-900">
-          Role <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="role"
-          onChange={(e) => {
-            const selectedId = Number(e.target.value);
-            const selected = role.find((role) => role.id === selectedId);
+      {!isSuperAdmin && (
+        <div>
+          <label htmlFor="role" className="text-sm font-medium text-stone-900">
+            Role <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="role"
+            onChange={(e) => {
+              const selectedId = Number(e.target.value);
+              const selected = role.find((role) => role.id === selectedId);
 
-            if (selected) setValue("role", selected);
-          }}
-          value={watch("role")?.id || ""}
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-        >
-          <option value="" disabled>
-            Pilih role...
-          </option>
-          {role.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
+              if (selected) setValue("role", selected);
+            }}
+            value={watch("role")?.id || ""}
+            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="" disabled>
+              Pilih role...
             </option>
-          ))}
-        </select>
-        {errors.role && (
-          <p className="pt-2 px-2 text-left text-xs text-red-500">
-            {errors.role.message}
-          </p>
-        )}
-      </div>
+            {role.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
+          </select>
+          {errors.role && (
+            <p className="pt-2 px-2 text-left text-xs text-red-500">
+              {errors.role.message}
+            </p>
+          )}
+        </div>
+      )}
       <div>
         <label
           htmlFor="password"
@@ -454,9 +458,7 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
         )}
       </div>
       <div className="flex justify-end">
-        <Button variant="green">
-          {isEditMode ? "Perbarui" : "Simpan"}
-        </Button>
+        <Button variant="green">{isEditMode ? "Perbarui" : "Simpan"}</Button>
       </div>
     </form>
   );

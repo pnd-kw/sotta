@@ -37,10 +37,12 @@ export const getGalleryImages = async ({
   page = 1,
   per_page = 8,
   search = "",
+  published = true,
 }: {
   page?: number;
   per_page?: number;
   search?: string;
+  published?: boolean;
 } = {}): Promise<PaginatedGalleryResponse> => {
   try {
     const response = await axiosInstance.get<PaginatedGalleryResponse>(
@@ -50,6 +52,7 @@ export const getGalleryImages = async ({
           page,
           per_page,
           search,
+          published,
         },
       }
     );

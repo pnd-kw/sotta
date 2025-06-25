@@ -6,14 +6,18 @@ import { format } from "date-fns";
 type GalleryImage = {
   id: string;
   name: string;
-  url: string;
+  published: boolean;
+  imageUrl: string;
+  public_id: string;
   alt: string;
   caption: string;
   tags: string[];
   mimeType: string;
   size: number;
-  createdAt: string;
-  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+  created_at: string;
+  updated_at: string;
 };
 
 type Props = {
@@ -23,15 +27,19 @@ type Props = {
 export default function GalleryDetail({ data }: Props) {
   return (
     <div className="max-w-[80vw] mx-auto p-4">
-      <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">{data.name}</h1>
+      <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">
+        {data.name}
+      </h1>
 
       <div className="flex gap-2">
         <div className="relative w-full h-125 mb-4">
           <Image
-            src={data.url}
+            src={data.imageUrl}
             alt={data.alt}
             fill
+            sizes="(max-width: 768px) 100vw, 800px"
             className="object-contain rounded"
+            priority
           />
         </div>
 
@@ -47,11 +55,11 @@ export default function GalleryDetail({ data }: Props) {
             </p>
             <p>
               <strong>Dibuat:</strong>{" "}
-              {format(new Date(data.createdAt), "dd MMMM yyyy")}
+              {format(new Date(data.created_at), "dd MMMM yyyy")}
             </p>
             <p>
               <strong>Diperbarui:</strong>{" "}
-              {format(new Date(data.updatedAt), "dd MMMM yyyy")}
+              {format(new Date(data.updated_at), "dd MMMM yyyy")}
             </p>
           </div>
 

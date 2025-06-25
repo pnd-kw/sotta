@@ -68,7 +68,7 @@ async function validateAvatarResolution(file: File): Promise<string | null> {
   return new Promise((resolve) => {
     const reader: FileReader = new FileReader();
     reader.onload = () => {
-      const img: HTMLImageElement = new Image();
+      const img: HTMLImageElement = new window.Image();
       img.onload = () => {
         if (img.width > MAX_AVATAR_WIDTH || img.height > MAX_AVATAR_HEIGHT) {
           resolve(
@@ -89,7 +89,6 @@ async function validateAvatarResolution(file: File): Promise<string | null> {
 type CustomerReviewForm = z.infer<typeof custReviewSchema>;
 
 export default function CustomerReview() {
-  const [visibleCustomerReview, setVisibleCustomerReview] = useState(3);
   const [isLoadingCustomerReviews, setIsLoadingCustomerReviews] =
     useState<boolean>(false);
   const [customerReviewsData, setCustomerReviewsData] = useState<
@@ -108,8 +107,7 @@ export default function CustomerReview() {
     last_page: 1,
     total: 0,
   });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [customerReviewsPerPage, setCustomerReviewsPerPage] = useState(10);
+  const [customerReviewsPerPage] = useState(4);
   const [selectedReview, setSelectedReview] = useState<CustomerReviewData>({
     id: "",
     name: "",
@@ -122,8 +120,7 @@ export default function CustomerReview() {
     can_delete: false,
     created_at: "",
   });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState<Record<string, boolean>>({});
   const [storedToken, setStoredToken] = useState<string | null>("");
   const dialog = useRef<ImageAlertDialogHandle>(null);
@@ -136,7 +133,8 @@ export default function CustomerReview() {
         per_page,
         search,
       });
-      setCustomerReviewsData(data.data);
+      const responseData = data.data;
+      setCustomerReviewsData((prev) => [...prev, ...responseData]);
       setPaginationInfo({
         current_page: data.current_page,
         next_page_url: data.next_page_url,
@@ -179,7 +177,7 @@ export default function CustomerReview() {
   });
 
   const onSubmit = async (data: CustomerReviewForm) => {
-    let avatarFile = data.avatar?.[0];
+    const avatarFile = data.avatar?.[0]; // Tipe const karena avatar belum diimplementasikan sehingga tidak pernah di re-assign
 
     if (avatarFile) {
       const resolutionError = await validateAvatarResolution(avatarFile);
@@ -188,6 +186,19 @@ export default function CustomerReview() {
         return;
       }
     }
+
+    // if (!avatarFile && !userId) {
+    //   const defaultAvatarPath =
+    //     data.gender === "laki-laki"
+    //       ? "/assets/avatar-1.svg"
+    //       : "/assets/avatar-2.svg";
+
+    //   const response = await fetch(defaultAvatarPath);
+    //   const blob = await response.blob();
+    //   const filename =
+    //     defaultAvatarPath.split("/").pop() || "default-avatar.svg";
+    //   avatarFile = new File([blob], filename, { type: blob.type });
+    // }
 
     const mappedGender = data.gender === "laki-laki" ? "male" : "female";
 
@@ -225,15 +236,27 @@ export default function CustomerReview() {
           type: "success",
         });
         reset();
+        fetchCustomerReview();
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.log(error);
+      const status = error;
+      console.log("status", status);
+      if (error?.response?.status === 409) {
+        ToastWithProgress({
+          title: "Duplikat",
+          description: "Review dengan token yang sama sudah ada.",
+          duration: 3000,
+          type: "error",
+        });
+        return;
+      }
       ToastWithProgress({
         title: "Gagal",
         description: selectedReview
           ? "Gagal memperbarui data review."
-          : "Gagal memyimpan data review.",
+          : "Gagal menyimpan data review.",
         duration: 3000,
         type: "error",
       });
@@ -315,18 +338,21 @@ export default function CustomerReview() {
   const groupedCustomerReview = groupCustomerReview(customerReviewsData, 2);
   const visibleGroupedCustomerReview = groupedCustomerReview.slice(
     0,
-    visibleCustomerReview
+    customerReviewsPerPage
   );
-
-  const handleLoadCustomerReview = () => {
-    setVisibleCustomerReview((prev) => prev + 3);
-  };
 
   const toggleExpand = (name: string) => {
     setIsExpanded((prev) => ({
       ...prev,
       [name]: !prev[name],
     }));
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = paginationInfo.current_page + 1;
+    if (nextPage <= paginationInfo.last_page) {
+      fetchCustomerReview(nextPage, customerReviewsPerPage);
+    }
   };
 
   return (
@@ -384,7 +410,7 @@ export default function CustomerReview() {
                   selectedReview.token ? "bg-[#85582c]" : "bg-black"
                 }`}
               >
-                {selectedReview.token ? "Resend" : "Send"}
+                {selectedReview.token ? "Update" : "Send"}
               </Button>
             </form>
           </div>
@@ -466,9 +492,16 @@ export default function CustomerReview() {
                       </div>
                     </div>
                   ))}
-                  <div>
-                    <Button onClick={handleLoadCustomerReview}>More</Button>
-                  </div>
+                  {paginationInfo.current_page < paginationInfo.last_page && (
+                    <div>
+                      <Button
+                        onClick={handleLoadMore}
+                        disabled={isLoadingCustomerReviews}
+                      >
+                        {isLoadingCustomerReviews ? "Loading..." : "More"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

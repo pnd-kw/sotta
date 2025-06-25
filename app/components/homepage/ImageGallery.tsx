@@ -1,163 +1,92 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { getGalleryImages } from "@/app/api/gallery/getGalleryImages";
 
-const galleryImage = [
-  {
-    id: "img_001",
-    name: "tabernakel",
-    url: "/assets/tabernakel.svg",
-    alt: "Tabernakel",
-    caption: "Tabernakel dari bahan kuningan",
-    tags: ["tabernakel", "kuningan"],
-    mimeType: "image/svg",
-    size: 125034,
-    createdAt: "2020-09-10T10:12:40.000456Z",
-    updatedAt: "2020-09-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_002",
-    name: "bejana kuningan",
-    url: "/assets/bejana_kuningan.svg",
-    alt: "Bejana kuningan",
-    caption: "Bejana dari kuningan",
-    tags: ["bejana", "kuningan"],
-    mimeType: "image/svg",
-    size: 98342,
-    createdAt: "2021-02-10T10:12:40.000456Z",
-    updatedAt: "2021-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_003",
-    name: "plakat souvenir",
-    url: "/assets/plakat_souvenir.svg",
-    alt: "Plakat souvenir",
-    caption: "Plakat untuk souvenir",
-    tags: ["plakat", "souvenir"],
-    mimeType: "image/svg",
-    size: 85760,
-    createdAt: "2023-04-10T10:12:40.000456Z",
-    updatedAt: "2023-04-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_004",
-    name: "kalung etnik",
-    url: "/assets/kalung_etnik.svg",
-    alt: "Kalung etnik",
-    caption: "Kalung etnik dari kuningan",
-    tags: ["kalung", "etnik", "kuningan"],
-    mimeType: "image/svg",
-    size: 90214,
-    createdAt: "2024-02-10T10:12:40.000456Z",
-    updatedAt: "2024-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_005",
-    name: "lencana kerajaan",
-    url: "/assets/lencana_kerajaan.svg",
-    alt: "Lencana kerajaan",
-    caption: "Lencana kerajaan kuno",
-    tags: ["lencana", "kerajaan"],
-    mimeType: "image/svg",
-    size: 75900,
-    createdAt: "2025-06-10T10:12:40.000456Z",
-    updatedAt: "2025-06-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_006",
-    name: "plakat ikan",
-    url: "/assets/plakat_ikan.svg",
-    alt: "Plakat ikan",
-    caption: "Plakat ikan terbang",
-    tags: ["plakat", "ikan"],
-    mimeType: "image/svg",
-    size: 80000,
-    createdAt: "2019-01-10T10:12:40.000456Z",
-    updatedAt: "2019-01-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_007",
-    name: "taber",
-    url: "/assets/tabernakel.svg",
-    alt: "Taber",
-    caption: "Taber kuningan",
-    tags: ["taber", "kuningan"],
-    mimeType: "image/svg",
-    size: 50000,
-    createdAt: "2018-02-10T10:12:40.000456Z",
-    updatedAt: "2018-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_008",
-    name: "bejana",
-    url: "/assets/bejana_kuningan.svg",
-    alt: "Bejana",
-    caption: "Bejana kuning",
-    tags: ["bejana", "kuning"],
-    mimeType: "image/svg",
-    size: 40000,
-    createdAt: "2020-07-10T10:12:40.000456Z",
-    updatedAt: "2020-07-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_009",
-    name: "plakat",
-    url: "/assets/plakat_souvenir.svg",
-    alt: "Plakat",
-    caption: "Plakat perak",
-    tags: ["plakat", "perak"],
-    mimeType: "image/svg",
-    size: 60000,
-    createdAt: "2023-05-10T10:12:40.000456Z",
-    updatedAt: "2023-05-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_010",
-    name: "kalung",
-    url: "/assets/kalung_etnik.svg",
-    alt: "Kalung",
-    caption: "Kalung unik",
-    tags: ["kalung", "unik"],
-    mimeType: "image/svg",
-    size: 70000,
-    createdAt: "2024-02-10T10:12:40.000456Z",
-    updatedAt: "2024-02-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_011",
-    name: "lencana",
-    url: "/assets/lencana_kerajaan.svg",
-    alt: "Lencana",
-    caption: "Lencana indah",
-    tags: ["lencana", "indah"],
-    mimeType: "image/svg",
-    size: 90000,
-    createdAt: "2024-08-10T10:12:40.000456Z",
-    updatedAt: "2024-08-10T10:12:40.000456Z",
-  },
-  {
-    id: "img_012",
-    name: "ikan",
-    url: "/assets/plakat_ikan.svg",
-    alt: "Ikan",
-    caption: "Ikan laut",
-    tags: ["ikan", "laut"],
-    mimeType: "image/svg",
-    size: 98769,
-    createdAt: "2019-07-10T10:12:40.000456Z",
-    updatedAt: "2019-07-10T10:12:40.000456Z",
-  },
-];
+type GalleryImage = {
+  id: string;
+  name: string;
+  published: boolean;
+  imageUrl: string;
+  public_id: string;
+  alt: string;
+  caption: string;
+  tags: string[];
+  mimeType: string;
+  size: number;
+  createdBy: string;
+  updatedBy: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export default function ImageGallery() {
-  const [visibleImageGallery, setVisibleImageGallery] = useState(8);
+  // const [visibleImageGallery, setVisibleImageGallery] = useState(8);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [paginationInfo, setPaginationInfo] = useState<{
+    current_page: number;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+    last_page: number;
+    total: number;
+  }>({
+    current_page: 1,
+    next_page_url: null,
+    prev_page_url: null,
+    last_page: 1,
+    total: 0,
+  });
+  const [imagePerPage] = useState(8);
+  const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(false);
 
-  const handleLoadGallery = () => {
-    setVisibleImageGallery((prev) => prev + 8);
+  const fetchGallery = async (
+    published = true,
+    page = 1,
+    per_page = imagePerPage,
+    search = ""
+  ) => {
+    try {
+      setIsLoadingGallery(true);
+      const data = await getGalleryImages({
+        published,
+        page,
+        per_page,
+        search,
+      });
+      const mappedData = data.data.map(
+        (item): GalleryImage => ({
+          ...item,
+          published: Boolean(item.published),
+        })
+      );
+      setGalleryImages((prev) => [...prev, ...mappedData]);
+      setPaginationInfo({
+        current_page: data.current_page,
+        next_page_url: data.next_page_url,
+        prev_page_url: data.prev_page_url,
+        last_page: data.last_page,
+        total: data.total,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Failed to fetch gallery images", error);
+    } finally {
+      setIsLoadingGallery(false);
+    }
   };
 
-  const visibleImage = galleryImage.slice(0, visibleImageGallery);
+  useEffect(() => {
+    fetchGallery(true, 1, imagePerPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imagePerPage]);
+
+  const handleLoadMore = () => {
+    const nextPage = paginationInfo.current_page + 1;
+    if (nextPage <= paginationInfo.last_page) {
+      fetchGallery(true, nextPage, imagePerPage);
+    }
+  };
 
   return (
     <div className="w-full bg-[#85582c]">
@@ -167,14 +96,13 @@ export default function ImageGallery() {
             Gallery
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 max-w-screen-xl mx-auto">
-            {visibleImage.map((item) => (
+            {galleryImages.map((item) => (
               <Link key={item.id} href={`/gallery/${item.id}`}>
                 <div
-                  // key={item.name}
                   className="group relative aspect-square border border-white overflow-hidden"
                 >
                   <Image
-                    src={item.url}
+                    src={item.imageUrl}
                     alt={item.alt}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
@@ -188,11 +116,15 @@ export default function ImageGallery() {
               </Link>
             ))}
           </div>
-          <div className="w-full flex items-center justify-center text-center">
-            <span className="py-4">
-              <Button onClick={handleLoadGallery}>More</Button>
-            </span>
-          </div>
+          {paginationInfo.current_page < paginationInfo.last_page && (
+            <div className="w-full flex items-center justify-center text-center">
+              <span className="py-4">
+                <Button onClick={handleLoadMore} disabled={isLoadingGallery}>
+                  {isLoadingGallery ? "Loading" : "More"}
+                </Button>
+              </span>
+            </div>
+          )}
         </div>
       </section>
     </div>

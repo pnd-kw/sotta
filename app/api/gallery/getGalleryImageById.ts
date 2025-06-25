@@ -1,4 +1,5 @@
-import axiosInstance from "../axiosInstance";
+import axios from "axios";
+// import axiosInstance from "../axiosInstance";
 
 interface GalleryByIdResponse {
   id: string;
@@ -21,8 +22,8 @@ export const getGalleryImagesById = async (params: {
   id: string;
 }): Promise<GalleryByIdResponse> => {
   try {
-    const response = await axiosInstance.get<GalleryByIdResponse>(
-      `/api/gallery/${params.id}`
+    const response = await axios.get<GalleryByIdResponse>(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/gallery/${params.id}`
     );
 
     return response.data;
