@@ -1,6 +1,6 @@
 "use client";
 
-import CustomerExp from "./components/homepage/CustomerExp";
+import CustomerExp from "./components/homepage/CustomerReview";
 import ImageGallery from "./components/homepage/ImageGallery";
 import Customers from "./components/homepage/Customers";
 import Jumbotron from "./components/homepage/Jumbotron";

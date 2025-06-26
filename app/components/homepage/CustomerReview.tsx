@@ -129,7 +129,9 @@ export default function CustomerReview() {
         search,
       });
       const responseData = data.data;
-      setCustomerReviewsData((prev) => [...prev, ...responseData]);
+      setCustomerReviewsData((prev) =>
+        page === 1 ? responseData : [...prev, ...responseData]
+      );
       setPaginationInfo({
         current_page: data.current_page,
         next_page_url: data.next_page_url,
@@ -423,8 +425,8 @@ export default function CustomerReview() {
             {isLoadingCustomerReviews ? (
               <Spinner />
             ) : (
-              <div className="overflow-hidden h-[65vh] relative">
-                <div className="flex flex-col overflow-auto h-[65vh]">
+              <div className="overflow-hidden h-[48vh] relative">
+                <div className="flex flex-col overflow-auto h-[48vh]">
                   {visibleGroupedCustomerReview.map((group, groupIndex) => (
                     <div key={groupIndex} className="py-2 h-full w-full px-4">
                       <div className="flex justify-between gap-6">
@@ -434,7 +436,7 @@ export default function CustomerReview() {
                             className="flex flex-col md:flex-row items-start bg-white shadow-xl rounded-md p-4 
                       text-left min-h-[4rem] w-full transition-transform duration-300 hover:scale-105"
                           >
-                            <div className="relative w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-full bg-stone-200">
+                            <div className="relative aspect-square w-24 md:w-32 overflow-hidden rounded-full bg-stone-200">
                               <Image
                                 src={
                                   item.gender === "male"
@@ -446,8 +448,8 @@ export default function CustomerReview() {
                                 className="object-cover"
                               />
                             </div>
-                            <div className="flex flex-col w-[16vw] px-2 py-2 items-start text-justify">
-                              <div className="flex w-[16vw] items-center justify-between">
+                            <div className="flex flex-col w-full px-2 py-2 items-start text-justify">
+                              <div className="flex w-full items-center justify-between">
                                 <div className="text-left text-sm font-semibold">
                                   {item.name} - {item.instansi}
                                 </div>

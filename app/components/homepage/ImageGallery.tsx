@@ -42,6 +42,8 @@ export default function ImageGallery() {
   const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(false);
   const { successApiResponse, setSuccessApiResponse } = useGalleryStore();
 
+  console.log("gallery", galleryImages);
+
   const fetchGallery = async (
     published = true,
     page = 1,
@@ -63,7 +65,9 @@ export default function ImageGallery() {
           published: Boolean(item.published),
         })
       );
-      setGalleryImages((prev) => [...prev, ...mappedData]);
+      setGalleryImages((prev) =>
+        page === 1 ? mappedData : [...prev, ...mappedData]
+      );
       setPaginationInfo({
         current_page: data.current_page,
         next_page_url: data.next_page_url,
@@ -103,7 +107,7 @@ export default function ImageGallery() {
     <div className="w-full bg-[#85582c]">
       <section id="gallery" className="text-center py-10">
         <div className="md:max-w-[80vw] mx-auto">
-          <h3 className="text-xl md:text-2xl text-[#85582c] font-semibold mb-2 py-4 bg-white rounded-full w-28 md:w-32 mx-auto mb-6">
+          <h3 className="text-xl md:text-2xl text-[#85582c] font-semibold py-4 bg-white rounded-full w-28 md:w-32 mx-auto mb-6">
             Gallery
           </h3>
           {isLoadingGallery ? (
