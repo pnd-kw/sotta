@@ -69,12 +69,15 @@ import GalleryDetail from "@/app/components/GalleryDetail";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-// ✅ Next.js expects this signature for metadata functions
-export async function generateMetadata(
-  props: { params: { id: string } }
-): Promise<Metadata | null> {
+// ✅ Sesuai dengan struktur Next.js App Router
+type PageProps = {
+  params: { id: string };
+  searchParams?: { preview?: string };
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata | null> {
   try {
-    const image = await getGalleryImagesById({ id: props.params.id });
+    const image = await getGalleryImagesById({ id: params.id });
 
     if (!image || !image.published) return null;
 
@@ -101,31 +104,28 @@ export async function generateMetadata(
       },
     };
   } catch (error) {
-    console.error("generateMetadata error", error);
+    console.error("Failed to generate metadata", error);
     return null;
   }
 }
 
-// ✅ Default page component for dynamic route
-export default async function GalleryDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams?: { preview?: string };
-}) {
+export default async function GalleryDetailPage({ params, searchParams }: PageProps) {
   const allowPreview = searchParams?.preview?.toLowerCase() === "true";
 
   try {
     const image = await getGalleryImagesById({ id: params.id });
 
-    if (!image || (!image.published && !allowPreview)) {
-      return notFound();
-    }
+    if (!image || (!image.published && !allowPreview)) return notFound();
 
-    return <GalleryDetail data={{ ...image, published: Boolean(image.published) }} />;
+    const transformed = {
+      ...image,
+      published: Boolean(image.published),
+    };
+
+    return <GalleryDetail data={transformed} />;
   } catch (error) {
-    console.error("GalleryDetailPage error", error);
+    console.error("Failed to fetch gallery image", error);
     return notFound();
   }
 }
+
