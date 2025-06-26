@@ -62,7 +62,7 @@ const ImageAlertDialog = forwardRef<
             <Button variant={buttonVariant ?? "red"} onClick={handleClick}>
               {buttonText || "Delete"}
             </Button>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)}>
               Tutup
             </Button>
           </div>

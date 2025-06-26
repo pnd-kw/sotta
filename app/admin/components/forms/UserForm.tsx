@@ -2,6 +2,7 @@ import { createUser } from "@/app/api/user/createUser";
 import { updateUser } from "@/app/api/user/updateUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useUserStore } from "@/store/userStore";
 import ToastWithProgress from "@/utils/ToastWithProgress";
 import { zodResolver } from "@hookform/resolvers/zod";
 import NextImage from "next/image";
@@ -29,24 +30,6 @@ type UserData = {
     name: string;
   };
 };
-
-// type User = {
-//   id_user: string;
-//   name: string;
-//   email: string;
-//   gender: Gender;
-//   avatar: string;
-//   phone_number: string;
-//   role: {
-//     id: number;
-//     name: string;
-//   };
-//   role_id: number;
-//   password: string;
-//   password_confirmation: string;
-//   created_at: string;
-//   updated_at: string;
-// };
 
 const role = [
   { id: 2, name: "admin" },
@@ -152,6 +135,7 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
     },
   });
 
+  const { setSuccessApiResponse } = useUserStore();
   const [preview, setPreview] = useState<string>("/assets/avatar-1.svg");
 
   const watchAvatar = watch("avatar");
@@ -220,8 +204,6 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
       avatar: avatarFile as File,
       phone_number: data.phone_number,
       role_id: data.role.id,
-      // password: data.password,
-      // password_confirmation: data.password_confirmation,
     };
 
     try {
@@ -235,10 +217,6 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
                   password_confirmation: data.password_confirmation,
                 }
               : {}),
-            // ...(data.password ? { password: data.password } : {}),
-            // ...(data.password_confirmation
-            //   ? { password_confirmation: data.password_confirmation }
-            //   : {}),
           },
           { params: { id: userId } }
         );
@@ -248,6 +226,7 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
           duration: 3000,
           type: "success",
         });
+        setSuccessApiResponse(true);
       } else {
         await createUser({
           ...basePayload,
@@ -261,6 +240,7 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
           type: "success",
         });
         reset();
+        setSuccessApiResponse(true);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -305,24 +285,6 @@ export default function UserForm({ userId, initialData }: UserFormProps) {
           </p>
         )}
       </div>
-      {/* <div>
-        <label
-          htmlFor="username"
-          className="text-sm font-medium text-stone-900"
-        >
-          Username <span className="text-red-500">*</span>
-        </label>
-        <Input
-          {...register("username")}
-          placeholder="John doe ..."
-          aria-invalid={!!errors.username}
-        />
-        {errors.username && (
-          <p className="pt-2 px-2 text-left text-xs text-red-500">
-            {errors.username.message}
-          </p>
-        )}
-      </div> */}
       <div>
         <label htmlFor="name" className="text-sm font-medium text-stone-900">
           Nama <span className="text-red-500">*</span>

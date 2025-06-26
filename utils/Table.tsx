@@ -125,7 +125,6 @@ export function Table<T extends Record<string, unknown>>({
 }: TableProps<T>): JSX.Element {
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [orderBy, setOrderBy] = useState<string>(defaultSortBy);
-  // const [page, setPage] = useState<number>(0);
   const [hoveredColumn, setHoveredColumn] = useState<string | null>(null);
   const [pinnedColumn, setPinnedColumn] = useState<PinnedColumn[]>([
     defaultPinned,
@@ -137,7 +136,6 @@ export function Table<T extends Record<string, unknown>>({
 
   const headers = Object.keys(data?.[0] || {});
   const isEvenNumber = (num: number) => num % 2 === 0;
-  // const totalPages = Math.ceil(data.length / rowsPerPage);
   const splitIndex = Math.floor(headers.length / 2);
   const leftColumn = headers.slice(0, splitIndex);
 
@@ -149,17 +147,9 @@ export function Table<T extends Record<string, unknown>>({
     };
   }, []);
 
-  // useEffect(() => {
-  //   const newTotalPages = Math.ceil(data.length / rowsPerPage);
-  //   if (page >= newTotalPages) {
-  //     setPage(Math.max(0, newTotalPages - 1));
-  //   }
-  // }, [page, rowsPerPage, data.length]);
-
   const visibleData = useMemo(() => {
     if (!Array.isArray(data) || data.length === 0) return [];
     return [...data].sort(getComparator(order, orderBy));
-    // .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [data, order, orderBy]);
 
   const activeIconButtons = useMemo(
@@ -435,7 +425,6 @@ export function Table<T extends Record<string, unknown>>({
           page={page + 1}
           totalPages={totalPage}
           onPageChange={(p) => {
-            console.log("Halaman dipilih:", p);
             onPageChange?.(p);
           }}
         />

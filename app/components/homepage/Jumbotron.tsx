@@ -61,17 +61,14 @@ export default function Jumbotron() {
       <div
         ref={textRef}
         className="absolute inset-0 flex flex-col items-center justify-center text-white text-start space-y-4"
-        // bg-[linear-gradient(to_bottom,_rgba(255,255,255,0)_10%,_#ca8606_90%,_#ba7b0b_95%,_#996515_100%)]
       >
         <h1
           className="text-4xl md:text-6xl text-center text-stone-950 font-bold font-mono"
-          // drop-shadow-[1px_1px_3px_rgba(0,0,0,0.8)]
         >
           Sotta Souvenir
         </h1>
         <h2
           className="text-md md:text-lg text-center text-[#ba7b0b] font-bold"
-          // drop-shadow-[1px_1px_3px_rgba(0,0,0,0.5)]
         >
           Pusat kerajinan souvenir logam yang berada di Yogyakarta
         </h2>

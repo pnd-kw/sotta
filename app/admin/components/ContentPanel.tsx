@@ -3,7 +3,7 @@
 import { useMenu } from "@/context/MenuContext";
 import Gallery from "../pages/Gallery";
 import Dashboard from "../pages/Dashboard";
-import CustomerExp from "../pages/CustomerExp";
+import CustomerExp from "../pages/CustomerReview";
 import Users from "../pages/Users";
 
 export default function ContentPanel() {

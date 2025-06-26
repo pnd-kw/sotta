@@ -26,7 +26,7 @@ import { getGalleryImagesById } from "@/app/api/gallery/getGalleryImageById";
 import ToastWithProgress from "@/utils/ToastWithProgress";
 import { updatePublishGalleryImage } from "@/app/api/gallery/updateGalleryImage";
 import { deleteGalleryImage } from "@/app/api/gallery/deleteGalleryImage";
-// import { searchGalleryImages } from "@/app/api/gallery/searchGalleryImages";
+import { useGalleryStore } from "@/store/galleryStore";
 
 type GalleryImage = {
   id: string;
@@ -45,12 +45,6 @@ type GalleryImage = {
   updated_at: string;
 };
 
-// interface SearchGalleryParams {
-//   search?: string;
-//   per_page?: number;
-//   page?: number;
-// }
-
 export default function Gallery() {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<{
@@ -68,10 +62,12 @@ export default function Gallery() {
   });
   const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(false);
   const [imagePerPage, setImagePerPage] = useState(8);
-  // const [imageGalleryPage, setImageGalleryPage] = useState(0);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { successApiResponse, setSuccessApiResponse } = useGalleryStore();
+  const [isPublishDialogOpen, setIsPublishDialogOpen] =
+    useState<boolean>(false);
   const user = useAuthStore((state) => state.user);
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
@@ -115,6 +111,14 @@ export default function Gallery() {
   }, [imagePerPage]);
 
   useEffect(() => {
+    if (successApiResponse) {
+      fetchGallery(1, imagePerPage, searchQuery);
+      setSuccessApiResponse(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successApiResponse]);
+
+  useEffect(() => {
     if (searchQuery.trim() === "") {
       fetchGallery(1, imagePerPage, "");
     }
@@ -131,12 +135,6 @@ export default function Gallery() {
     resetGalleryIfEmpty();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
-
-  // const totalPages = Math.ceil(galleryImages.length / imagePerPage);
-
-  // const startIndex = imagePerPage * imageGalleryPage;
-  // const endIndex = startIndex + imagePerPage;
-  // const visibleImage = galleryImages.slice(startIndex, endIndex);
 
   async function handleEdit(id_image: string) {
     try {
@@ -179,6 +177,8 @@ export default function Gallery() {
         duration: 3000,
         type: "success",
       });
+      setIsPublishDialogOpen(false);
+      setSuccessApiResponse(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to update publish gallery image", error);
@@ -232,6 +232,7 @@ export default function Gallery() {
         duration: 3000,
         type: "success",
       });
+      setSuccessApiResponse(true);
     } catch (error) {
       console.error("Failed to delete data image", error);
       ToastWithProgress({
@@ -287,11 +288,6 @@ export default function Gallery() {
                 }
               }}
             >
-              {/* <DialogTrigger asChild>
-                <Button variant="green">
-                  <FaPlus /> Tambah
-                </Button>
-              </DialogTrigger> */}
               <DialogContent className="min-w-[60vw] max-h-[90vh] overflow-y-auto">
                 <VisuallyHidden>
                   <DialogTitle></DialogTitle>
@@ -364,11 +360,17 @@ export default function Gallery() {
                   />
                   <div className="absolute inset-0 flex justify-end py-2 px-2 space-x-2">
                     {!item.published && (
-                      <Dialog>
+                      <Dialog
+                        open={isPublishDialogOpen}
+                        onOpenChange={setIsPublishDialogOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             variant="green"
-                            onClick={() => setSelectedImage(item)}
+                            onClick={() => {
+                              setSelectedImage(item);
+                              setIsPublishDialogOpen(true);
+                            }}
                           >
                             <MdPreview />
                           </Button>

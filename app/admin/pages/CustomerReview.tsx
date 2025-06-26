@@ -1,6 +1,7 @@
 import { deleteCustomerReview } from "@/app/api/customer_review/deleteCustomerReview";
 import { getCustomerReviews } from "@/app/api/customer_review/getCustomerReviews";
 import { useAuthStore } from "@/store/authStore";
+import { useCustomerReviewStore } from "@/store/customerReviewStore";
 import BouncingImage from "@/utils/BouncingImage";
 import ImageAlertDialog, {
   ImageAlertDialogHandle,
@@ -43,7 +44,6 @@ export default function CustomerExp() {
     last_page: 1,
     total: 0,
   });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [customerReviewsPerPage, setCustomerReviewsPerPage] = useState(10);
   const [selectedReview, setSelectedReview] = useState<CustomerReviewData>({
     id: "",
@@ -60,6 +60,8 @@ export default function CustomerExp() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [reviewPerPage, setReviewPerPage] = useState(8);
   const [searchQuery, setSearchQuery] = useState("");
+  const { successApiResponse, setSuccessApiResponse } =
+    useCustomerReviewStore();
   const loggedInRoles = useAuthStore((state) => state.user?.role_name);
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
@@ -88,14 +90,18 @@ export default function CustomerExp() {
   };
 
   useEffect(() => {
-    fetchCustomerReview(
-      paginationInfo.current_page,
-      customerReviewsPerPage,
-    );
+    fetchCustomerReview(paginationInfo.current_page, customerReviewsPerPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerReviewsPerPage]);
 
-   useEffect(() => {
+  useEffect(() => {
+    if (successApiResponse) {
+      fetchCustomerReview(paginationInfo.current_page, customerReviewsPerPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successApiResponse]);
+
+  useEffect(() => {
     if (searchQuery.trim() === "") {
       fetchCustomerReview(1, reviewPerPage, "");
     }
@@ -137,6 +143,7 @@ export default function CustomerExp() {
         type: "success",
       });
       localStorage.removeItem("customer_review_token");
+      setSuccessApiResponse(true);
     } catch (error) {
       console.error("Failed to delete data review", error);
       ToastWithProgress({
@@ -146,6 +153,15 @@ export default function CustomerExp() {
         type: "error",
       });
     }
+  }
+
+  function handlePageChange(newPage: number) {
+    const newPageFixed = newPage + 1;
+    setPaginationInfo((prev) => ({
+      ...prev,
+      current_page: newPageFixed,
+    }));
+    fetchCustomerReview(newPageFixed, customerReviewsPerPage, searchQuery);
   }
 
   return (
@@ -176,8 +192,11 @@ export default function CustomerExp() {
           ) : (
             <Table
               data={customerReviewsData}
+              page={paginationInfo?.current_page - 1}
+              totalPage={Math.ceil(
+                paginationInfo?.total / customerReviewsPerPage
+              )}
               defaultSortBy="created_at"
-              perPage={10}
               listIconButton={[
                 {
                   name: "delete",
@@ -212,6 +231,15 @@ export default function CustomerExp() {
                     {value ? "Bisa Hapus" : "Tidak Bisa"}
                   </span>
                 ),
+              }}
+              perPage={customerReviewsPerPage}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={(newPerPage) => {
+                setCustomerReviewsPerPage(newPerPage);
+                setPaginationInfo((prev) => ({
+                  ...prev,
+                  current_page: 1,
+                }));
               }}
               customWidths={{
                 id_review: "min-w-[14rem]",

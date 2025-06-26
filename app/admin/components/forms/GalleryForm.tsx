@@ -10,10 +10,12 @@ import { createGalleryImage } from "@/app/api/gallery/createGalleryImage";
 import { useAuthStore } from "@/store/authStore";
 import ToastWithProgress from "@/utils/ToastWithProgress";
 import { updateGalleryImage } from "@/app/api/gallery/updateGalleryImage";
+import { useGalleryStore } from "@/store/galleryStore";
 
 interface GalleryFormProps {
   imageId?: string;
   initialData?: GalleryImage | null;
+  successApiResponse?: boolean;
 }
 
 type GalleryImage = {
@@ -98,6 +100,8 @@ export default function GalleryForm({
     defaultValues: { published: false },
   });
   const user = useAuthStore((state) => state.user);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { setSuccessApiResponse } = useGalleryStore();
   const [tagsInput, setTagsInput] = useState("");
 
   useEffect(() => {
@@ -130,6 +134,7 @@ export default function GalleryForm({
   }, [nameValue]);
 
   const onSubmit = async (data: GalleryForm) => {
+    setIsLoading(true);
     const file = data.image?.[0];
     if (file) {
       const isValidResolution = await validateImageResolution(file);
@@ -158,6 +163,7 @@ export default function GalleryForm({
           duration: 3000,
           type: "success",
         });
+        setSuccessApiResponse(true);
       } else {
         await createGalleryImage({
           ...basePayload,
@@ -169,6 +175,7 @@ export default function GalleryForm({
           duration: 3000,
           type: "success",
         });
+        setSuccessApiResponse(true);
         reset();
         setTagsInput("");
       }
@@ -183,6 +190,8 @@ export default function GalleryForm({
         duration: 3000,
         type: "error",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -350,7 +359,9 @@ export default function GalleryForm({
           )}
         />
         <div className="flex justify-end">
-          <Button variant="green">{initialData ? "Perbarui" : "Simpan"}</Button>
+          <Button variant="green" disabled={isLoading}>
+            {isLoading ? "Memproses" : initialData ? "Perbarui" : "Simpan"}
+          </Button>
         </div>
       </form>
     </>

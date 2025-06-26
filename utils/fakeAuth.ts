@@ -8,8 +8,7 @@ export const fakeLogin = (username: string, password: string) => {
 
     const base64Payload = btoa(JSON.stringify(fakePayload));
     const fakeToken = `fakeHeader.${base64Payload}.fakeSignature`;
-
-    // localStorage.setItem("token", fakeToken);
+    
     document.cookie = `token=${fakeToken}; path=/; max-age=3600`
     
     return fakePayload;

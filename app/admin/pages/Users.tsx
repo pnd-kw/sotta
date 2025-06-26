@@ -20,6 +20,7 @@ import { getUserById } from "@/app/api/user/getUserById";
 import ToastWithProgress from "@/utils/ToastWithProgress";
 import { deleteUser } from "@/app/api/user/deleteUser";
 import Spinner from "@/utils/Spinner";
+import { useUserStore } from "@/store/userStore";
 
 type Gender = "laki-laki" | "perempuan";
 
@@ -103,6 +104,7 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { successApiResponse, setSuccessApiResponse } = useUserStore();
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
   const fetchUser = async (page = 1, per_page = userPerPage, search = "") => {
@@ -129,24 +131,20 @@ export default function Users() {
     }
   };
 
-  // useEffect(() => {
-  //   fetchUser(1, userPerPage, searchQuery);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [userPerPage]);
-
-  // useEffect(() => {
-  //   if (searchQuery.trim() === "") {
-  //     fetchUser(1, userPerPage, "");
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [searchQuery]);
-
   useEffect(() => {
     fetchUser(paginationInfo.current_page, userPerPage);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPerPage]);
 
-   useEffect(() => {
+  useEffect(() => {
+    if (successApiResponse) {
+      fetchUser(paginationInfo.current_page, userPerPage);
+      setSuccessApiResponse(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successApiResponse]);
+
+  useEffect(() => {
     if (searchQuery.trim() === "") {
       fetchUser(1, userPerPage, "");
     }
@@ -219,6 +217,7 @@ export default function Users() {
         duration: 3000,
         type: "success",
       });
+      setSuccessApiResponse(true);
     } catch (error) {
       console.error("Failed to delete data user", error);
       ToastWithProgress({

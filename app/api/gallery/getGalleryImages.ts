@@ -37,6 +37,40 @@ export const getGalleryImages = async ({
   page = 1,
   per_page = 8,
   search = "",
+}: {
+  page?: number;
+  per_page?: number;
+  search?: string;
+} = {}): Promise<PaginatedGalleryResponse> => {
+  try {
+    const response = await axiosInstance.get<PaginatedGalleryResponse>(
+      "/api/gallery",
+      {
+        params: {
+          page,
+          per_page,
+          search,
+        },
+      }
+    );
+
+    return response.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    if (error.response) {
+      const errorMessage =
+        error.response.data?.message || "Get gallery images failed";
+      throw new Error(errorMessage);
+    } else {
+      throw new Error("Network error");
+    }
+  }
+};
+
+export const getPublishedGalleryImages = async ({
+  page = 1,
+  per_page = 8,
+  search = "",
   published = true,
 }: {
   page?: number;

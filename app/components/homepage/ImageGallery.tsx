@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { getGalleryImages } from "@/app/api/gallery/getGalleryImages";
+import { getPublishedGalleryImages } from "@/app/api/gallery/getGalleryImages";
+import { useGalleryStore } from "@/store/galleryStore";
+import Spinner from "@/utils/Spinner";
 
 type GalleryImage = {
   id: string;
@@ -22,7 +24,6 @@ type GalleryImage = {
 };
 
 export default function ImageGallery() {
-  // const [visibleImageGallery, setVisibleImageGallery] = useState(8);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<{
     current_page: number;
@@ -39,6 +40,7 @@ export default function ImageGallery() {
   });
   const [imagePerPage] = useState(8);
   const [isLoadingGallery, setIsLoadingGallery] = useState<boolean>(false);
+  const { successApiResponse, setSuccessApiResponse } = useGalleryStore();
 
   const fetchGallery = async (
     published = true,
@@ -48,7 +50,7 @@ export default function ImageGallery() {
   ) => {
     try {
       setIsLoadingGallery(true);
-      const data = await getGalleryImages({
+      const data = await getPublishedGalleryImages({
         published,
         page,
         per_page,
@@ -81,6 +83,14 @@ export default function ImageGallery() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imagePerPage]);
 
+  useEffect(() => {
+    if (successApiResponse) {
+      fetchGallery(true, 1, imagePerPage);
+      setSuccessApiResponse(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successApiResponse]);
+
   const handleLoadMore = () => {
     const nextPage = paginationInfo.current_page + 1;
     if (nextPage <= paginationInfo.last_page) {
@@ -95,27 +105,29 @@ export default function ImageGallery() {
           <h3 className="text-xl md:text-2xl text-[#85582c] font-semibold mb-2 py-4 bg-white rounded-full w-28 md:w-32 mx-auto mb-6">
             Gallery
           </h3>
-          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 max-w-screen-xl mx-auto">
-            {galleryImages.map((item) => (
-              <Link key={item.id} href={`/gallery/${item.id}`}>
-                <div
-                  className="group relative aspect-square border border-white overflow-hidden"
-                >
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.alt}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-50 transition-opacity duration-300">
-                    <h3 className="h-full flex items-center justify-center text-xl font-bold text-white capitalize text-center px-2">
-                      {item.name.toLowerCase()}
-                    </h3>
+          {isLoadingGallery ? (
+            <Spinner borderColor="bg-white" />
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 max-w-screen-xl mx-auto">
+              {galleryImages.map((item) => (
+                <Link key={item.id} href={`/gallery/${item.id}`}>
+                  <div className="group relative aspect-square border border-white overflow-hidden">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.alt}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-50 transition-opacity duration-300">
+                      <h3 className="h-full flex items-center justify-center text-xl font-bold text-white capitalize text-center px-2">
+                        {item.name.toLowerCase()}
+                      </h3>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
           {paginationInfo.current_page < paginationInfo.last_page && (
             <div className="w-full flex items-center justify-center text-center">
               <span className="py-4">

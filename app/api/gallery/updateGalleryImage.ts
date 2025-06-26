@@ -31,10 +31,6 @@ export const updateGalleryImage = async (
     formData.append("image", imageDataUpdate.image);
   }
 
-  // imageDataUpdate.tags?.forEach((tag, i) => {
-  //   formData.append(`tags[${i}]`, tag);
-  // });
-
     imageDataUpdate.tags.forEach((tag) => {
       formData.append("tags[]", tag);
     });

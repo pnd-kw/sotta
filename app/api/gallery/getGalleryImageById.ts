@@ -1,5 +1,4 @@
 import axios from "axios";
-// import axiosInstance from "../axiosInstance";
 
 interface GalleryByIdResponse {
   id: string;

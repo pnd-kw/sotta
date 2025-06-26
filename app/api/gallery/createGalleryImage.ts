@@ -25,10 +25,6 @@ export const createGalleryImage = async (imageData: ImageData) => {
     formData.append("tags[]", tag);
   });
 
-  // for (const pair of formData.entries()) {
-  //   console.log(`${pair[0]}:`, pair[1]);
-  // }
-
   try {
     const response = await axiosInstance.post("/api/gallery", formData, {
       headers: {

@@ -18,14 +18,7 @@ import BouncingImage from "@/utils/BouncingImage";
 import { deleteCustomerReview } from "@/app/api/customer_review/deleteCustomerReview";
 import { updateCustomerReview } from "@/app/api/customer_review/updateCustomerReview";
 import Spinner from "@/utils/Spinner";
-
-// interface CustomerReview {
-//   name: string;
-//   path: string;
-//   alt: string;
-//   message: string;
-//   instansi: string;
-// }
+import { useCustomerReviewStore } from "@/store/customerReviewStore";
 
 type CustomerReviewData = {
   id: string;
@@ -123,6 +116,8 @@ export default function CustomerReview() {
   const [searchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState<Record<string, boolean>>({});
   const [storedToken, setStoredToken] = useState<string | null>("");
+  const { successApiResponse, setSuccessApiResponse } =
+    useCustomerReviewStore();
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
   const fetchCustomerReview = async (page = 1, per_page = 4, search = "") => {
@@ -158,6 +153,18 @@ export default function CustomerReview() {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerReviewsPerPage, searchQuery]);
+
+  useEffect(() => {
+    if (successApiResponse) {
+      fetchCustomerReview(
+        paginationInfo.current_page,
+        customerReviewsPerPage,
+        searchQuery
+      );
+      setSuccessApiResponse(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successApiResponse]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("customer_review_token");
@@ -240,9 +247,6 @@ export default function CustomerReview() {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.log(error);
-      const status = error;
-      console.log("status", status);
       if (error?.response?.status === 409) {
         ToastWithProgress({
           title: "Duplikat",
@@ -304,6 +308,7 @@ export default function CustomerReview() {
         type: "success",
       });
       localStorage.removeItem("customer_review_token");
+      setSuccessApiResponse(true);
     } catch (error) {
       console.error("Failed to delete data review", error);
       ToastWithProgress({
