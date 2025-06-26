@@ -3,12 +3,9 @@ import GalleryDetail from "@/app/components/GalleryDetail";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-type Props = {
-  params: { id: string };
-  searchParams?: { preview?: string };
-};
-
-export async function generateMetadata({ params }: Props): Promise<Metadata | null> {
+export async function generateMetadata(
+  { params }: { params: { id: string } }
+): Promise<Metadata | null> {
   try {
     const image = await getGalleryImagesById({ id: params.id });
 
@@ -22,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata | nu
         description: image.caption,
         images: [
           {
-            url: `${image.imageUrl}`,
+            url: image.imageUrl,
             width: 800,
             height: 600,
             alt: image.alt,
@@ -33,24 +30,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata | nu
         card: "summary_large_image",
         title: image.name,
         description: image.caption,
-        images: [`${image.imageUrl}`],
+        images: [image.imageUrl],
       },
     };
   } catch (error) {
-    console.log("Failed to get metadata", error);
-    return {};
+    console.error("Failed to get metadata", error);
+    return null;
   }
 }
 
-export default async function GalleryDetailPage({ params, searchParams }: Props) {
+export default async function GalleryDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { preview?: string };
+}) {
   const allowPreview = searchParams?.preview?.toLowerCase() === "true";
 
   try {
     const image = await getGalleryImagesById({ id: params.id });
 
-    
-
-    if (!image || (!image.published && !allowPreview)) return notFound();
+    if (!image || (!image.published && !allowPreview)) {
+      return notFound();
+    }
 
     const transformPublishedType = {
       ...image,
