@@ -56,6 +56,7 @@ export default function ImageGallery() {
         per_page,
         search,
       });
+      console.log("res", data);
       const mappedData = data.data.map(
         (item): GalleryImage => ({
           ...item,

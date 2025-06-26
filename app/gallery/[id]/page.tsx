@@ -1,81 +1,16 @@
-// import { getGalleryImagesById } from "@/app/api/gallery/getGalleryImageById";
-// import GalleryDetail from "@/app/components/GalleryDetail";
-// import { notFound } from "next/navigation";
-// import type { Metadata } from "next";
-
-// type Props = {
-//   params: { id: string };
-//   searchParams?: { preview?: string };
-// };
-
-// export async function generateMetadata({ params }: Props): Promise<Metadata | null> {
-//   try {
-//     const image = await getGalleryImagesById({ id: params.id });
-
-//     if (!image || !image.published) return null;
-
-//     return {
-//       title: image.name,
-//       description: image.caption,
-//       openGraph: {
-//         title: image.name,
-//         description: image.caption,
-//         images: [
-//           {
-//             url: `${image.imageUrl}`,
-//             width: 800,
-//             height: 600,
-//             alt: image.alt,
-//           },
-//         ],
-//       },
-//       twitter: {
-//         card: "summary_large_image",
-//         title: image.name,
-//         description: image.caption,
-//         images: [`${image.imageUrl}`],
-//       },
-//     };
-//   } catch (error) {
-//     console.log("Failed to get metadata", error);
-//     return {};
-//   }
-// }
-
-// export default async function GalleryDetailPage({ params, searchParams }: Props) {
-//   const allowPreview = searchParams?.preview?.toLowerCase() === "true";
-
-//   try {
-//     const image = await getGalleryImagesById({ id: params.id });
-
-    
-
-//     if (!image || (!image.published && !allowPreview)) return notFound();
-
-//     const transformPublishedType = {
-//       ...image,
-//       published: Boolean(image.published),
-//     };
-
-//     return <GalleryDetail data={transformPublishedType} />;
-//   } catch (error) {
-//     console.error("Failed to fetch gallery image", error);
-//     return notFound();
-//   }
-// }
-
 import { getGalleryImagesById } from "@/app/api/gallery/getGalleryImageById";
 import GalleryDetail from "@/app/components/GalleryDetail";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-// ✅ Sesuai dengan struktur Next.js App Router
-type PageProps = {
+type Props = {
   params: { id: string };
   searchParams?: { preview?: string };
 };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata | null> {
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata | null> {
   try {
     const image = await getGalleryImagesById({ id: params.id });
 
@@ -89,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata 
         description: image.caption,
         images: [
           {
-            url: image.imageUrl,
+            url: `${image.imageUrl}`,
             width: 800,
             height: 600,
             alt: image.alt,
@@ -100,16 +35,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata 
         card: "summary_large_image",
         title: image.name,
         description: image.caption,
-        images: [image.imageUrl],
+        images: [`${image.imageUrl}`],
       },
     };
   } catch (error) {
-    console.error("Failed to generate metadata", error);
-    return null;
+    console.log("Failed to get metadata", error);
+    return {};
   }
 }
 
-export default async function GalleryDetailPage({ params, searchParams }: PageProps) {
+export default async function GalleryDetailPage({
+  params,
+  searchParams,
+}: Props) {
   const allowPreview = searchParams?.preview?.toLowerCase() === "true";
 
   try {
@@ -117,12 +55,12 @@ export default async function GalleryDetailPage({ params, searchParams }: PagePr
 
     if (!image || (!image.published && !allowPreview)) return notFound();
 
-    const transformed = {
+    const transformPublishedType = {
       ...image,
       published: Boolean(image.published),
     };
 
-    return <GalleryDetail data={transformed} />;
+    return <GalleryDetail data={transformPublishedType} />;
   } catch (error) {
     console.error("Failed to fetch gallery image", error);
     return notFound();
