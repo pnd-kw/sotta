@@ -8,11 +8,11 @@ type Props = {
   searchParams?: { preview?: string };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata | null> {
   try {
     const image = await getGalleryImagesById({ id: params.id });
 
-    if (!image || !image.published) return {};
+    if (!image || !image.published) return null;
 
     return {
       title: image.name,
