@@ -20,6 +20,14 @@ type Category = {
   children?: Category[];
 };
 
+type Image = {
+  imageUrl: string;
+  public_id: string;
+  alt: string;
+  mimeType: string;
+  size: number;
+};
+
 interface GalleryFormProps {
   imageId?: string;
   initialData?: GalleryImage | null;
@@ -30,13 +38,10 @@ type GalleryImage = {
   id: string;
   name: string;
   published: boolean;
-  imageUrl: string;
-  public_id: string;
-  alt: string;
   caption: string;
   tags: string[];
-  mimeType: string;
-  size: number;
+  categories: Category[];
+  images: Image[];
   createdBy: string;
   updatedBy: string;
   created_at: string;
@@ -59,19 +64,25 @@ const galleryFormSchema = (isEditMode: boolean) =>
         required_error: "Pilih setidaknya 1 kategori",
       })
       .min(1, "Pilih setidaknya 1 kategori"),
-    image: isEditMode
+    images: isEditMode
       ? z.any().optional()
       : z
-          .any()
-          .refine((file) => file?.length === 1, "Gambar wajib diunggah")
+          .array(z.any())
+          .refine((files) => files.length > 0, "Gambar wajib diunggah")
           .refine(
-            (file) => file?.[0]?.type?.startsWith("image/"),
-            "File harus berupa gambar"
+            (files) => files.every((file) => file.type.startsWith("image/")),
+            "Semua file harus berupa gambar"
           )
           .refine(
-            (file) => file?.[0]?.size <= MAX_FILE_SIZE,
+            (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
             `Ukuran gambar maksimal ${MAX_FILE_SIZE / (1024 * 1024)}MB`
-          ),
+          )
+          .refine(async (files) => {
+            const resolutions = await Promise.all(
+              files.map(validateImageResolution)
+            );
+            return resolutions.every((res) => res);
+          }, "Resolusi gambar tidak boleh lebih dari 1920x1080"),
   });
 
 const validateImageResolution = (file: File): Promise<boolean> => {
@@ -135,13 +146,17 @@ export default function GalleryForm({
 
   useEffect(() => {
     if (initialData) {
+      const categoryIds = initialData.categories.map((cat) =>
+        cat.id.toString()
+      );
+      setSelectedCategoryIds(categoryIds);
       reset({
         name: initialData.name,
-        alt: initialData.alt,
         caption: initialData.caption,
         tags: initialData.tags ?? [],
         published: initialData.published ?? false,
-        image: undefined,
+        categories: categoryIds,
+        images: initialData.images,
       });
 
       setTagsInput((initialData.tags ?? []).join(" "));
@@ -164,13 +179,14 @@ export default function GalleryForm({
 
   const onSubmit = async (data: GalleryForm) => {
     setIsLoading(true);
-    const file = data.image?.[0];
-    if (file) {
-      const isValidResolution = await validateImageResolution(file);
-      if (!isValidResolution) {
-        alert(`Resolusi gambar maksimal ${MAX_WIDTH}x${MAX_HEIGHT}px`);
-        return;
-      }
+    const files = data.images;
+    const resolutionChecks = await Promise.all(
+      files.map(validateImageResolution)
+    );
+    if (resolutionChecks.includes(false)) {
+      alert(`Resolusi gambar maksimal ${MAX_WIDTH}x${MAX_HEIGHT}px`);
+      setIsLoading(false);
+      return;
     }
 
     // const basePayload = {
@@ -252,7 +268,7 @@ export default function GalleryForm({
       >
         <div>
           <label htmlFor="name" className="text-sm font-medium text-stone-900">
-            Image name <span className="text-red-500">*</span>
+            Product name <span className="text-red-500">*</span>
           </label>
           <Input
             {...register("name")}
@@ -265,7 +281,7 @@ export default function GalleryForm({
             </p>
           )}
         </div>
-        <div>
+        {/* <div>
           <label htmlFor="alt" className="text-sm font-medium text-stone-900">
             Image alt <span className="text-red-500">*</span>
           </label>
@@ -279,13 +295,13 @@ export default function GalleryForm({
               {errors.alt.message}
             </p>
           )}
-        </div>
+        </div> */}
         <div>
           <label
             htmlFor="caption"
             className="text-sm font-medium text-stone-900"
           >
-            Image caption <span className="text-red-500">*</span>
+            Product caption <span className="text-red-500">*</span>
           </label>
           <Input
             textarea
@@ -311,7 +327,7 @@ export default function GalleryForm({
         </div>
         <div>
           <label htmlFor="tags" className="text-sm font-medium text-stone-900">
-            Image tags <span className="text-red-500"></span>
+            Product tags <span className="text-red-500"></span>
           </label>
           <Input
             textarea
@@ -356,7 +372,7 @@ export default function GalleryForm({
           <Controller
             name="categories"
             control={control}
-            defaultValue={[]}
+            defaultValue={selectedCategoryIds}
             render={({ field }) => (
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
@@ -370,8 +386,9 @@ export default function GalleryForm({
                         onClick={() => {
                           const newValue = isSelected
                             ? field.value.filter((id) => id !== String(cat.id))
-                            : [...field.value, cat.id];
+                            : [...field.value, String(cat.id)];
                           field.onChange(newValue);
+                          setSelectedCategoryIds(newValue);
                         }}
                         className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors duration-200 ${
                           isSelected
@@ -395,15 +412,19 @@ export default function GalleryForm({
         </div>
         {initialData && (
           <div>
-            Image link :{" "}
-            <a
-              href={initialData.imageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              {initialData.imageUrl}
-            </a>
+            {initialData.images.map((img, index) => (
+              <div key={index}>
+                Image {index + 1} link :{" "}
+                <a
+                  href={img.imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  {img.imageUrl}
+                </a>
+              </div>
+            ))}
           </div>
         )}
         <div>
@@ -417,10 +438,10 @@ export default function GalleryForm({
                 </>
               )
             }
-            onChange={(e) => setValue("image", e.target.files)}
+            onChange={(e) => setValue("images", e.target.files)}
             error={
-              typeof errors.image?.message === "string"
-                ? errors.image.message
+              typeof errors.images?.message === "string"
+                ? errors.images.message
                 : undefined
             }
           />

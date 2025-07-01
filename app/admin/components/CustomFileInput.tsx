@@ -11,16 +11,17 @@ export default function CustomFileInput({
   error?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState<string>("");
+  const [fileNames, setFileNames] = useState<string[]>([]);
 
   const handleClick = () => {
     inputRef.current?.click();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
+    const files = e.target.files;
+    if (files) {
+      const names = Array.from(files).map(file => file.name);
+      setFileNames(names);
     }
     onChange(e);
   };
@@ -40,7 +41,7 @@ export default function CustomFileInput({
           Pilih Gambar
         </Button>
         <span className="text-sm text-stone-700 italic truncate max-w-xs">
-          {fileName || "Belum ada file dipilih (ukuran maksimal 2MB)"}
+          {fileNames.length > 0 ? fileNames.join(", ") : "Belum ada file dipilih (ukuran maksimal 2MB)"}
         </span>
         <input
           type="file"
@@ -48,6 +49,7 @@ export default function CustomFileInput({
           ref={inputRef}
           onChange={handleChange}
           className="hidden"
+          multiple
         />
       </div>
       {error && (

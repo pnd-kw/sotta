@@ -89,6 +89,7 @@ export default function Gallery() {
   const { successApiResponse, setSuccessApiResponse } = useGalleryStore();
   const [isPublishDialogOpen, setIsPublishDialogOpen] =
     useState<boolean>(false);
+  const [mainImage, setMainImage] = useState<ImageObject | null>(null);
   const user = useAuthStore((state) => state.user);
   const dialog = useRef<ImageAlertDialogHandle>(null);
 
@@ -108,8 +109,16 @@ export default function Gallery() {
         (item): GalleryImage => ({
           ...item,
           published: Boolean(item.published),
-          images: data.images.map((item) => ({ ...item })),
-          categories: data.categories || [],
+          images: item.images.map(
+            (img): ImageObject => ({
+              imageUrl: img.imageUrl,
+              public_id: img.public_id,
+              alt: img.alt,
+              mimeType: img.mimeType,
+              size: img.size.toString(),
+            })
+          ),
+          categories: item.categories || [],
         })
       );
       setGalleryImages(mappedData);
@@ -165,6 +174,16 @@ export default function Gallery() {
       setSelectedImage({
         ...data,
         published: Boolean(data.published),
+        images: data.images.map(
+          (img): ImageObject => ({
+            imageUrl: img.imageUrl,
+            public_id: img.public_id,
+            alt: img.alt,
+            mimeType: img.mimeType,
+            size: img.size.toString(),
+          })
+        ),
+        categories: data.categories || [],
       });
       setIsFormDialogOpen(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -224,6 +243,16 @@ export default function Gallery() {
       setSelectedImage({
         ...data,
         published: Boolean(data.published),
+        images: data.images.map(
+          (img): ImageObject => ({
+            imageUrl: img.imageUrl,
+            public_id: img.public_id,
+            alt: img.alt,
+            mimeType: img.mimeType,
+            size: img.size.toString(),
+          })
+        ),
+        categories: data.categories || [],
       });
       dialog.current?.openDialog();
     } catch (error) {
@@ -375,6 +404,7 @@ export default function Gallery() {
                                 variant="green"
                                 onClick={() => {
                                   setSelectedImage(item);
+                                  setMainImage(item.images[0]);
                                   setIsPublishDialogOpen(true);
                                 }}
                               >
@@ -414,12 +444,39 @@ export default function Gallery() {
 
                                   <div className="flex gap-2">
                                     <div className="relative w-full h-125 mb-4">
-                                      <Image
-                                        src={selectedImage.imageUrl}
-                                        alt={selectedImage.alt}
-                                        fill
-                                        className="object-contain rounded"
-                                      />
+                                      {mainImage && mainImage.imageUrl ? (
+                                        <>
+                                          <Image
+                                            src={mainImage.imageUrl}
+                                            alt={mainImage.alt}
+                                            fill
+                                            className="object-contain rounded"
+                                          />
+                                          <div className="flex mt-4 space-x-2">
+                                            {selectedImage.images.map(
+                                              (img, index) => (
+                                                <div
+                                                  key={index}
+                                                  className="cursor-pointer"
+                                                  onClick={() =>
+                                                    setMainImage(img)
+                                                  }
+                                                >
+                                                  <Image
+                                                    src={img.imageUrl}
+                                                    alt={img.alt}
+                                                    width={100}
+                                                    height={100}
+                                                    className="object-cover"
+                                                  />
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div>Failed to load image.</div>
+                                      )}
                                     </div>
 
                                     <div className="flex flex-col">
