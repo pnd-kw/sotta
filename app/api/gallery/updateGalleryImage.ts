@@ -1,13 +1,22 @@
 import axiosInstance from "../axiosInstance";
 
+interface ExistingImage {
+  imageUrl: string;
+  public_id: string;
+  alt: string;
+  mimeType: string;
+  size: number;
+}
+
 interface ImageDataUpdate {
   name: string;
   published: boolean | number;
-  alt: string;
   caption: string;
   tags: string[];
-  image: File | null;
+  categories?: string[];
   updatedBy: string;
+  newImages: File[];
+  existingImages: ExistingImage[];
 }
 
 interface ImagePublishDataUpdate {
@@ -23,17 +32,22 @@ export const updateGalleryImage = async (
   formData.append("_method", "PATCH");
   formData.append("name", imageDataUpdate.name);
   formData.append("published", imageDataUpdate.published ? "1" : "0");
-  formData.append("alt", imageDataUpdate.alt);
   formData.append("caption", imageDataUpdate.caption);
   formData.append("updatedBy", imageDataUpdate.updatedBy);
 
-  if (imageDataUpdate.image) {
-    formData.append("image", imageDataUpdate.image);
-  }
+  imageDataUpdate.tags.forEach((tag) => {
+    formData.append("tags[]", tag);
+  });
 
-    imageDataUpdate.tags.forEach((tag) => {
-      formData.append("tags[]", tag);
-    });
+  imageDataUpdate.categories?.forEach((id) => {
+    formData.append("categories[]", id);
+  });
+
+  formData.append("images_data", JSON.stringify(imageDataUpdate.existingImages));
+
+  imageDataUpdate.newImages.forEach((file) => {
+    formData.append("images[]", file);
+  });
 
   try {
     for (const [key, value] of formData.entries()) {

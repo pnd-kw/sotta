@@ -6,7 +6,8 @@ interface ImageData {
   alt: string;
   caption: string;
   tags: string[];
-  image: File;
+  categories: string[];
+  images: File[];
   createdBy: string;
   updatedBy: string;
 }
@@ -15,14 +16,18 @@ export const createGalleryImage = async (imageData: ImageData) => {
   const formData = new FormData();
   formData.append("name", imageData.name);
   formData.append("published", imageData.published ? "1" : "0");
-  formData.append("alt", imageData.alt);
   formData.append("caption", imageData.caption);
   formData.append("createdBy", imageData.createdBy);
   formData.append("updatedBy", imageData.updatedBy);
-  formData.append("image", imageData.image);
 
   imageData.tags.forEach((tag) => {
     formData.append("tags[]", tag);
+  });
+
+  imageData.categories.forEach((id) => formData.append("categories[]", id));
+
+  imageData.images.forEach((file) => {
+    formData.append("images[]", file);
   });
 
   try {

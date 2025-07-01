@@ -1,16 +1,21 @@
 import axiosInstance from "../axiosInstance";
 
+interface ImageObject {
+  imageUrl: string;
+  public_id: string;
+  alt: string;
+  mimeType: string;
+  size: number;
+}
+
 interface GalleryImage {
   id: string;
   name: string;
   published: boolean | number;
-  imageUrl: string;
-  public_id: string;
-  alt: string;
+  thumbnailUrl: string;
   caption: string;
   tags: string[];
-  mimeType: string;
-  size: number;
+  images: ImageObject[];
   createdBy: string;
   updatedBy: string;
   created_at: string;

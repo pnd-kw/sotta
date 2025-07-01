@@ -3,7 +3,7 @@ import axiosInstance from "../axiosInstance";
 export const deleteGalleryImage = async (id: string) => {
   try {
     const response = await axiosInstance.delete(`/api/gallery/${id}`);
-    return response;
+    return response.data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.response) {

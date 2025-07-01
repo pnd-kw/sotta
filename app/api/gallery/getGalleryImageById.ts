@@ -1,16 +1,29 @@
 import axios from "axios";
 
+interface GalleryImage {
+  imageUrl: string;
+  public_id: string;
+  alt: string;
+  mimeType: string;
+  size: number;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface GalleryByIdResponse {
   id: string;
   name: string;
   published: boolean | number;
-  imageUrl: string;
-  public_id: string;
-  alt: string;
+  thumbnailUrl: string;
+  images: GalleryImage[];
   caption: string;
   tags: string[];
-  mimeType: string;
-  size: number;
+  categories: Category[];
   createdBy: string;
   updatedBy: string;
   created_at: string;

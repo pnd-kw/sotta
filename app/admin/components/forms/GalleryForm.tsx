@@ -11,6 +11,14 @@ import { useAuthStore } from "@/store/authStore";
 import ToastWithProgress from "@/utils/ToastWithProgress";
 import { updateGalleryImage } from "@/app/api/gallery/updateGalleryImage";
 import { useGalleryStore } from "@/store/galleryStore";
+import { getCategories } from "@/app/api/category/getCategories";
+
+type Category = {
+  id: number;
+  name: string;
+  parent_id?: number | null;
+  children?: Category[];
+};
 
 interface GalleryFormProps {
   imageId?: string;
@@ -46,6 +54,11 @@ const galleryFormSchema = (isEditMode: boolean) =>
     alt: z.string().min(1, "Image alt wajib diisi"),
     caption: z.string().min(1, "Caption image wajib diisi"),
     tags: z.array(z.string()).optional(),
+    categories: z
+      .array(z.string(), {
+        required_error: "Pilih setidaknya 1 kategori",
+      })
+      .min(1, "Pilih setidaknya 1 kategori"),
     image: isEditMode
       ? z.any().optional()
       : z
@@ -99,10 +112,26 @@ export default function GalleryForm({
     resolver: zodResolver(galleryFormSchema(isEditMode)),
     defaultValues: { published: false },
   });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const user = useAuthStore((state) => state.user);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { setSuccessApiResponse } = useGalleryStore();
   const [tagsInput, setTagsInput] = useState("");
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        console.error("Failed to fetch categories", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -144,19 +173,29 @@ export default function GalleryForm({
       }
     }
 
-    const basePayload = {
-      name: data.name,
-      published: !!data.published,
-      alt: data.alt,
-      caption: data.caption,
-      tags: data.tags || [],
-      image: file,
-      updatedBy: user?.name || "",
-    };
+    // const basePayload = {
+    //   name: data.name,
+    //   published: !!data.published,
+    //   alt: data.alt,
+    //   caption: data.caption,
+    //   tags: data.tags || [],
+    //   image: file,
+    //   updatedBy: user?.name || "",
+    // };
 
     try {
       if (initialData && imageId) {
-        await updateGalleryImage(basePayload, { params: { id: imageId } });
+        const updatePayload = {
+          name: data.name,
+          published: !!data.published,
+          caption: data.caption,
+          tags: data.tags || [],
+          categories: selectedCategoryIds,
+          updatedBy: user?.name || "",
+          newImages: files,
+          existingImages: initialData.images || [],
+        };
+        await updateGalleryImage(updatePayload, { params: { id: imageId } });
         ToastWithProgress({
           title: "Berhasil",
           description: "Data image gallery berhasil diperbarui.",
@@ -165,10 +204,18 @@ export default function GalleryForm({
         });
         setSuccessApiResponse(true);
       } else {
-        await createGalleryImage({
-          ...basePayload,
+        const createPayload = {
+          name: data.name,
+          published: !!data.published,
+          alt: data.alt,
+          caption: data.caption,
+          tags: data.tags || [],
+          categories: selectedCategoryIds,
+          images: files,
           createdBy: user?.name || "",
-        });
+          updatedBy: user?.name || "",
+        };
+        await createGalleryImage(createPayload);
         ToastWithProgress({
           title: "Berhasil",
           description: "Data image gallery berhasil disimpan.",
@@ -298,6 +345,53 @@ export default function GalleryForm({
               Maximum of 250 characters
             </span>
           </div>
+        </div>
+        <div>
+          <label
+            htmlFor="categories"
+            className="text-sm font-medium text-stone-900"
+          >
+            Categories <span className="text-red-500">*</span>
+          </label>
+          <Controller
+            name="categories"
+            control={control}
+            defaultValue={[]}
+            render={({ field }) => (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat) => {
+                    const isSelected = field.value.includes(String(cat.id));
+
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          const newValue = isSelected
+                            ? field.value.filter((id) => id !== String(cat.id))
+                            : [...field.value, cat.id];
+                          field.onChange(newValue);
+                        }}
+                        className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors duration-200 ${
+                          isSelected
+                            ? "bg-green-600 text-white border-green-600"
+                            : "bg-gray-200 text-gray-800 border-gray-300 hover:bg-gray-300"
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          />
+          {errors.categories && (
+            <p className="pt-1 text-xs text-red-500">
+              {errors.categories.message}
+            </p>
+          )}
         </div>
         {initialData && (
           <div>

@@ -27,18 +27,39 @@ import ToastWithProgress from "@/utils/ToastWithProgress";
 import { updatePublishGalleryImage } from "@/app/api/gallery/updateGalleryImage";
 import { deleteGalleryImage } from "@/app/api/gallery/deleteGalleryImage";
 import { useGalleryStore } from "@/store/galleryStore";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+type ImageObject = {
+  imageUrl: string;
+  public_id: string;
+  alt: string;
+  mimeType: string;
+  size: string;
+};
+
+interface Category {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
 
 type GalleryImage = {
   id: string;
   name: string;
   published: boolean;
-  imageUrl: string;
-  public_id: string;
-  alt: string;
+  thumbnailUrl: string;
+  images: ImageObject[];
   caption: string;
   tags: string[];
-  mimeType: string;
-  size: number;
+  categories: Category[];
   createdBy: string;
   updatedBy: string;
   created_at: string;
@@ -87,6 +108,8 @@ export default function Gallery() {
         (item): GalleryImage => ({
           ...item,
           published: Boolean(item.published),
+          images: data.images.map((item) => ({ ...item })),
+          categories: data.categories || [],
         })
       );
       setGalleryImages(mappedData);
@@ -303,7 +326,7 @@ export default function Gallery() {
                 </div>
                 <GalleryForm
                   imageId={selectedImage?.id}
-                  initialData={selectedImage}
+                  // initialData={selectedImage}
                 />
               </DialogContent>
             </Dialog>
@@ -321,12 +344,150 @@ export default function Gallery() {
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 max-w-screen-xl mx-auto mb-4">
               {galleryImages.map((item) => (
-                <div
+                <Card key={item.id}>
+                  <CardHeader>
+                    <CardTitle>{item.name}</CardTitle>
+                    <CardDescription>
+                      <p>
+                        <strong>Dibuat:</strong>{" "}
+                        {format(new Date(item.created_at), "dd MMMM yyyy")}
+                      </p>
+                      <p>
+                        <strong>Diperbarui:</strong>{" "}
+                        {format(new Date(item.updated_at), "dd MMMM yyyy")}
+                      </p>
+                      <p>
+                        <strong>Dibuat oleh:</strong> {item.createdBy}
+                      </p>
+                      <p>
+                        <strong>Diperbarui oleh:</strong> {item.updatedBy}
+                      </p>
+                    </CardDescription>
+                    <CardAction>
+                      <div className="absolute inset-0 flex justify-end py-2 px-2 space-x-2">
+                        {!item.published && (
+                          <Dialog
+                            open={isPublishDialogOpen}
+                            onOpenChange={setIsPublishDialogOpen}
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="green"
+                                onClick={() => {
+                                  setSelectedImage(item);
+                                  setIsPublishDialogOpen(true);
+                                }}
+                              >
+                                <MdPreview />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent fullscreen>
+                              <VisuallyHidden>
+                                <DialogTitle></DialogTitle>
+                              </VisuallyHidden>
+                              <VisuallyHidden>
+                                <DialogDescription>
+                                  Dialog untuk preview image gallery halaman
+                                  pengunjung
+                                </DialogDescription>
+                              </VisuallyHidden>
+
+                              <div className="flex items-center space-x-4 px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
+                                <Button
+                                  variant="green"
+                                  onClick={() => {
+                                    if (selectedImage?.id) {
+                                      handlePublish(selectedImage.id);
+                                    }
+                                  }}
+                                >
+                                  Publish
+                                </Button>
+                                <span>Preview</span>
+                              </div>
+
+                              {selectedImage && (
+                                <div className="max-w-[80vw] mx-auto p-4">
+                                  <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">
+                                    {selectedImage.name}
+                                  </h1>
+
+                                  <div className="flex gap-2">
+                                    <div className="relative w-full h-125 mb-4">
+                                      <Image
+                                        src={selectedImage.imageUrl}
+                                        alt={selectedImage.alt}
+                                        fill
+                                        className="object-contain rounded"
+                                      />
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                      <p className="text-gray-700 mb-2">
+                                        {selectedImage.caption}
+                                      </p>
+
+                                      <div className="mt-4">
+                                        <strong>Tag:</strong>{" "}
+                                        {selectedImage?.tags?.map((tag) => (
+                                          <span
+                                            key={tag}
+                                            className="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 mr-2 rounded-md"
+                                          >
+                                            {tag}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        )}
+                        <Button
+                          variant="whiteAmberText"
+                          onClick={() => {
+                            handleEdit(item.id);
+                          }}
+                        >
+                          <MdEdit />
+                        </Button>
+                        <Button
+                          variant="whiteRedText"
+                          disabled={user?.role_name !== "superadmin"}
+                          onClick={() => handleGetTargetImage(item.id)}
+                        >
+                          <MdDelete />
+                        </Button>
+                      </div>
+                    </CardAction>
+                    <CardContent>
+                      <Image
+                        src={item.thumbnailUrl}
+                        alt={item.images[0].alt}
+                        width={300}
+                        height={300}
+                        className="object-cover w-full h-full"
+                      />
+
+                      <div
+                        className={`absolute bottom-1 right-1 px-4 py-2 rounded-md text-xs font-bold ${
+                          item.published
+                            ? "bg-green-600 text-white"
+                            : "bg-gray-100"
+                        }`}
+                      >
+                        {item.published ? "Published" : "Draft"}
+                      </div>
+                    </CardContent>
+                  </CardHeader>
+                  {/* <div
                   key={item.id}
                   title={item.caption ?? item.alt}
                   className="relative aspect-square border border-white overflow-hidden group"
-                >
-                  <div className="absolute inset-0 w-[300px] h-[300px] flex items-center px-4 bg-black/20 opacity-0 group-hover:opacity-100  transition-opacity duration-300">
+                > */}
+                  {/* <div className="absolute inset-0 w-[300px] h-[300px] flex items-center px-4 bg-black/20 opacity-0 group-hover:opacity-100  transition-opacity duration-300">
                     <div className="text-sm text-white mb-4">
                       <p>
                         <strong>Ukuran:</strong> {(item.size / 1024).toFixed(2)}{" "}
@@ -350,119 +511,10 @@ export default function Gallery() {
                         <strong>Diperbarui oleh:</strong> {item.updatedBy}
                       </p>
                     </div>
-                  </div>
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.alt}
-                    width={300}
-                    height={300}
-                    className="object-cover w-full h-full"
-                  />
-                  <div className="absolute inset-0 flex justify-end py-2 px-2 space-x-2">
-                    {!item.published && (
-                      <Dialog
-                        open={isPublishDialogOpen}
-                        onOpenChange={setIsPublishDialogOpen}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="green"
-                            onClick={() => {
-                              setSelectedImage(item);
-                              setIsPublishDialogOpen(true);
-                            }}
-                          >
-                            <MdPreview />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent fullscreen>
-                          <VisuallyHidden>
-                            <DialogTitle></DialogTitle>
-                          </VisuallyHidden>
-                          <VisuallyHidden>
-                            <DialogDescription>
-                              Dialog untuk preview image gallery halaman
-                              pengunjung
-                            </DialogDescription>
-                          </VisuallyHidden>
+                  </div> */}
 
-                          <div className="flex items-center space-x-4 px-4 bg-[#996515] w-full h-[10vh] rounded-tl-md rounded-tr-md text-white font-semibold">
-                            <Button
-                              variant="green"
-                              onClick={() => {
-                                if (selectedImage?.id) {
-                                  handlePublish(selectedImage.id);
-                                }
-                              }}
-                            >
-                              Publish
-                            </Button>
-                            <span>Preview</span>
-                          </div>
-
-                          {selectedImage && (
-                            <div className="max-w-[80vw] mx-auto p-4">
-                              <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">
-                                {selectedImage.name}
-                              </h1>
-
-                              <div className="flex gap-2">
-                                <div className="relative w-full h-125 mb-4">
-                                  <Image
-                                    src={selectedImage.imageUrl}
-                                    alt={selectedImage.alt}
-                                    fill
-                                    className="object-contain rounded"
-                                  />
-                                </div>
-
-                                <div className="flex flex-col">
-                                  <p className="text-gray-700 mb-2">
-                                    {selectedImage.caption}
-                                  </p>
-
-                                  <div className="mt-4">
-                                    <strong>Tag:</strong>{" "}
-                                    {selectedImage?.tags?.map((tag) => (
-                                      <span
-                                        key={tag}
-                                        className="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 mr-2 rounded-md"
-                                      >
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    )}
-                    <Button
-                      variant="whiteAmberText"
-                      onClick={() => {
-                        handleEdit(item.id);
-                      }}
-                    >
-                      <MdEdit />
-                    </Button>
-                    <Button
-                      variant="whiteRedText"
-                      disabled={user?.role_name !== "superadmin"}
-                      onClick={() => handleGetTargetImage(item.id)}
-                    >
-                      <MdDelete />
-                    </Button>
-                  </div>
-                  <div
-                    className={`absolute bottom-1 right-1 px-4 py-2 rounded-md text-xs font-bold ${
-                      item.published ? "bg-green-600 text-white" : "bg-gray-100"
-                    }`}
-                  >
-                    {item.published ? "Published" : "Draft"}
-                  </div>
-                </div>
+                  {/* </div> */}
+                </Card>
               ))}
             </div>
           )}
