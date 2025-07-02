@@ -65,9 +65,19 @@ const galleryFormSchema = (isEditMode: boolean) =>
       })
       .min(1, "Pilih setidaknya 1 kategori"),
     images: isEditMode
-      ? z.any().optional()
+      ? z
+          .array(
+            z.object({
+              imageUrl: z.string(),
+              public_id: z.string(),
+              alt: z.string(),
+              mimeType: z.string(),
+              size: z.number(),
+            })
+          )
+          .optional()
       : z
-          .array(z.any())
+          .array(z.instanceof(File))
           .refine((files) => files.length > 0, "Gambar wajib diunggah")
           .refine(
             (files) => files.every((file) => file.type.startsWith("image/")),
@@ -179,7 +189,26 @@ export default function GalleryForm({
 
   const onSubmit = async (data: GalleryForm) => {
     setIsLoading(true);
-    const files = data.images;
+    let files: File[] = [];
+
+    if (isEditMode) {
+      const existingImages = data.images as { alt: string; imageUrl: string; public_id:string; mimeType: string; size: number; }[] | undefined;
+      if (existingImages) {
+        console.log("Existing images:", existingImages);
+      }
+    } else {
+      const uploadedFiles = data.images as File[] | undefined;
+      if (uploadedFiles) {
+        files = uploadedFiles;
+      }
+    }
+
+    if (files.length === 0) {
+      alert("Gambar wajib diunggah");
+      setIsLoading(false);
+      return;
+    }
+
     const resolutionChecks = await Promise.all(
       files.map(validateImageResolution)
     );
@@ -438,7 +467,12 @@ export default function GalleryForm({
                 </>
               )
             }
-            onChange={(e) => setValue("images", e.target.files)}
+            onChange={(e) => {
+              const filesArray = e.target.files
+                ? Array.from(e.target.files)
+                : [];
+              setValue("images", filesArray);
+            }}
             error={
               typeof errors.images?.message === "string"
                 ? errors.images.message
