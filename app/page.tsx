@@ -7,6 +7,7 @@ import Jumbotron from "./components/homepage/Jumbotron";
 import Head from "next/head";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Contacts from "./components/homepage/Contacts";
 
 export default function Home() {
   return (
@@ -32,6 +33,7 @@ export default function Home() {
         <ImageGallery />
         <CustomerExp />
         <Customers />
+        <Contacts />
       </div>
       <Footer />
     </>

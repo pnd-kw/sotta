@@ -16,13 +16,19 @@ export default function Header() {
             href="#gallery"
             className="hover:text-white px-6 py-2 hover:bg-[#ba7b0b] rounded-full"
           >
-            Gallery
+            Products
           </a>
           <a
             href="#customers"
             className="hover:text-white px-6 py-2 hover:bg-[#ba7b0b] rounded-full"
           >
             Customers
+          </a>
+          <a
+            href="#contacts"
+            className="hover:text-white px-6 py-2 hover:bg-[#ba7b0b] rounded-full"
+          >
+            Contacts
           </a>
         </nav>
       </div>
