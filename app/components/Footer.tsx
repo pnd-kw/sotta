@@ -1,4 +1,4 @@
-import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
+import { FaInstagram } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -20,18 +20,6 @@ export default function Footer() {
               <a href="#" className="flex items-center gap-2 hover:underline">
                 <FaInstagram />
                 Instagram
-              </a>
-            </li>
-            <li>
-              <a href="#" className="flex items-center gap-2 hover:underline">
-                <FaFacebook />
-                Facebook
-              </a>
-            </li>
-            <li>
-              <a href="#" className="flex items-center gap-2 hover:underline">
-                <FaYoutube />
-                Youtube
               </a>
             </li>
           </ul>

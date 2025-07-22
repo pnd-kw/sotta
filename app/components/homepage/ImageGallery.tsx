@@ -144,6 +144,55 @@
 //     </div>
 //   );
 // }
+
+"use client";
+import { Icon } from "@iconify/react";
+
+const items = [
+  { icon: "icon-park-solid:card-two", text: "Plakat" },
+  { icon: "ri:graduation-cap-fill", text: "Perlengkapan Wisuda" },
+  { icon: "emojione-monotone:1st-place-medal", text: "Medali & Emblem" },
+  { icon: "game-icons:trophy", text: "Piala & Trophy" },
+  { icon: "game-icons:galleon", text: "Souvenir Miniatur" },
+  { icon: "game-icons:flower-emblem", text: "Kerajinan Logam" },
+  { icon: "game-icons:eagle-emblem", text: "Artwork" },
+  { icon: "streamline:give-gift-solid", text: "Souvenir Perusahaan" },
+];
+
 export default function ImageGallery() {
-  return <div>Under construction</div>;
+  return (
+    <div className="w-full bg-[#85582c]">
+      <section id="gallery" className="text-center py-10">
+        <div className="md:max-w-[80vw] mx-auto">
+          <h3 className="text-xl md:text-2xl text-[#85582c] font-semibold py-4 bg-white rounded-full w-28 md:w-32 mx-auto mb-6">
+            Products
+          </h3>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 h-auto">
+            {items.map((item, index) => (
+              <div
+                key={index}
+                className="group w-full aspect-square [perspective:1000px]"
+              >
+                <div className="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                  {/* FRONT */}
+                  <div className="absolute w-full h-full backface-hidden bg-white rounded-lg flex items-center justify-center">
+                    <Icon
+                      icon={item.icon}
+                      className="w-20 h-20 text-[#85582c]"
+                    />
+                  </div>
+
+                  {/* BACK */}
+                  <div className="absolute w-full h-full backface-hidden [transform:rotateY(180deg)] bg-[#85582c] border-4 border-white rounded-lg flex items-center justify-center text-white font-semibold text-2xl">
+                    {item.text}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }

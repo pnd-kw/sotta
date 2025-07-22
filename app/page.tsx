@@ -8,6 +8,8 @@ import Head from "next/head";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Contacts from "./components/homepage/Contacts";
+import Link from "next/link";
+import { Icon } from "@iconify/react";
 
 export default function Home() {
   return (
@@ -36,6 +38,14 @@ export default function Home() {
         <Contacts />
       </div>
       <Footer />
+
+      <Link
+        href="https://wa.me/6281754573000?text=Halo%20Sotta%20Souvenir%2C%20saya%20tertarik%20dengan%20produk%20Anda"
+        target="_blank"
+        className="fixed bottom-4 right-4 z-50 bg-green-500 text-white px-4 py-4 rounded-full shadow-lg hover:bg-green-600 transition"
+      >
+        <Icon icon="logos:whatsapp-icon" className="w-6 h-6" />
+      </Link>
     </>
   );
 }
