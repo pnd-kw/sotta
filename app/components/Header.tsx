@@ -3,7 +3,7 @@ type Category = {
   id: number;
   name: string;
 }
-export default function Header({ categories = [] }: { categories: Category[] }) {
+export default function Header({ categories = [] }: { categories?: Category[] }) {
   return (
     <header className="fixed top-0 w-full bg-white z-50">
       <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
