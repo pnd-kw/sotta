@@ -146,7 +146,13 @@
 // }
 
 "use client";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
+
+type Category = {
+  id: number;
+  name: string;
+};
 
 const items = [
   { icon: "icon-park-solid:card-two", text: "Plakat" },
@@ -159,9 +165,18 @@ const items = [
   { icon: "streamline:give-gift-solid", text: "Souvenir Perusahaan" },
 ];
 
-export default function ImageGallery() {
+export default function ImageGallery({
+  categories = [],
+}: {
+  categories: Category[];
+}) {
+  const catList = categories.map((item, index) => ({
+    ...item,
+    icon: items[index]?.icon || "mdi:folder",
+  }));
+
   return (
-    <div className="w-full bg-[#85582c]">
+    <div className="w-full">
       <section id="gallery" className="text-center py-10">
         <div className="md:max-w-[80vw] mx-auto">
           <h3 className="text-xl md:text-2xl text-[#85582c] font-semibold py-4 bg-white rounded-full w-28 md:w-32 mx-auto mb-6">
@@ -169,24 +184,33 @@ export default function ImageGallery() {
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 h-auto">
-            {items.map((item, index) => (
+            {catList.map((item) => (
               <div
-                key={index}
+                key={item.id}
                 className="group w-full aspect-square [perspective:1000px]"
               >
                 <div className="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
                   {/* FRONT */}
-                  <div className="absolute w-full h-full backface-hidden bg-white rounded-lg flex items-center justify-center">
+                  <div className="absolute w-full h-full backface-hidden flex flex-col space-y-6 items-center justify-center">
                     <Icon
                       icon={item.icon}
                       className="w-20 h-20 text-[#85582c]"
                     />
+                    <div className="flex flex-col min-h-[12vh] justify-start p-2">
+                      <h3 className="text-lg font-semibold">{item.name}</h3>
+                      <span className="text-sm">
+                        Berbagai macam produk {item.name}
+                      </span>
+                    </div>
                   </div>
 
                   {/* BACK */}
-                  <div className="absolute w-full h-full backface-hidden [transform:rotateY(180deg)] bg-[#85582c] border-4 border-white rounded-lg flex items-center justify-center text-white font-semibold text-2xl">
-                    {item.text}
-                  </div>
+                  <Button
+                    variant="brown"
+                    className="absolute w-full h-full backface-hidden [transform:rotateY(180deg)] flex items-center justify-center text-[#85582c] font-semibold text-2xl"
+                  >
+                    {item.name}
+                  </Button>
                 </div>
               </div>
             ))}

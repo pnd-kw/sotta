@@ -10,11 +10,35 @@ import Footer from "./components/Footer";
 import Contacts from "./components/homepage/Contacts";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
+import { useEffect, useState } from "react";
+import { getCategories } from "./api/category/getCategories";
+
+type Category = {
+  id: number;
+  name: string;
+  parent_id?: number | null;
+  children?: Category[];
+};
 
 export default function Home() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        console.error("Failed to fetch categories", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   return (
     <>
-      <Header />
+      <Header categories={categories} />
       <Head>
         <title>Sotta Souvenir - Pusat Souvenir Logam Yogyakarta</title>
         <meta
@@ -32,7 +56,7 @@ export default function Home() {
       </Head>
       <div className="flex flex-col items-center">
         <Jumbotron />
-        <ImageGallery />
+        <ImageGallery categories={categories}/>
         <CustomerExp />
         <Customers />
         <Contacts />

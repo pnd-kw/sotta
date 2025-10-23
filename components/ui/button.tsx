@@ -18,8 +18,8 @@ const buttonVariants = cva(
         whiteAmberText: "bg-white text-amber-500 shadow-xs hover:bg-stone-100",
         transAmberText:
           "bg-transparent text-amber-500 shadow-xs hover:bg-stone-100",
-        transGrayText:
-          "bg-transparent text-gray-500 hover:text-gray-400",
+        transGrayText: "bg-transparent text-gray-500 hover:text-gray-400",
+        brown: "bg-white shadow-lg cursor-pointer",
         green:
           "bg-green-700 text-primary-foreground shadow-xs hover:bg-green-600",
         red: "bg-red-500 text-primary-foreground shadow-xs hover:bg-red-400",
