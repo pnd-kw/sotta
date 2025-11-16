@@ -35,6 +35,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type ImageObject = {
   imageUrl: string;
@@ -442,7 +443,106 @@ export default function Gallery() {
                                     {selectedImage.name}
                                   </h1>
 
-                                  <div className="flex gap-2">
+                                  <div className="relative w-full h-[60vh] bg-black/5 rounded-lg flex items-center justify-center overflow-hidden">
+                                    {selectedImage.images.length > 1 && (
+                                      <Button
+                                        type="button"
+                                        onClick={() => {
+                                          const currentIndex =
+                                            selectedImage.images.findIndex(
+                                              (x) =>
+                                                x.imageUrl ===
+                                                mainImage?.imageUrl
+                                            );
+                                          const prevIndex =
+                                            currentIndex === 0
+                                              ? selectedImage.images.length - 1
+                                              : currentIndex - 1;
+                                          setMainImage(
+                                            selectedImage.images[prevIndex]
+                                          );
+                                        }}
+                                        className="absolute left-3 p-2 bg-white/70 rounded-full shadow hover:bg-white"
+                                      >
+                                        <ChevronLeft size={28} />
+                                      </Button>
+                                    )}
+
+                                    <div className="relative w-full h-full">
+                                      <Image
+                                        src={mainImage?.imageUrl ?? ""}
+                                        alt={mainImage?.alt ?? "image"}
+                                        fill
+                                        className="object-contain rounded"
+                                      />
+                                    </div>
+
+                                    {selectedImage.images.length > 1 && (
+                                      <Button
+                                        type="button"
+                                        onClick={() => {
+                                          const currentIndex =
+                                            selectedImage.images.findIndex(
+                                              (x) =>
+                                                x.imageUrl ===
+                                                mainImage?.imageUrl
+                                            );
+                                          const nextIndex =
+                                            currentIndex ===
+                                            selectedImage.images.length - 1
+                                              ? 0
+                                              : currentIndex + 1;
+
+                                          setMainImage(
+                                            selectedImage.images[nextIndex]
+                                          );
+                                        }}
+                                        className="absolute right-3 p-2 bg-white/70 rounded-full shadow hover:bg-white"
+                                      >
+                                        <ChevronRight size={28} />
+                                      </Button>
+                                    )}
+                                  </div>
+
+                                  <div className="flex justify-center gap-3 mt-4">
+                                    {selectedImage.images.map((img, index) => (
+                                      <Button
+                                        type="button"
+                                        key={index}
+                                        onClick={() => setMainImage(img)}
+                                        className={`border-2 rounded-md p-1 ${
+                                          mainImage?.imageUrl === img.imageUrl
+                                            ? "border-blue-500"
+                                            : "border-transparent"
+                                        }`}
+                                      >
+                                        <Image
+                                          src={img.imageUrl}
+                                          alt={img.alt}
+                                          width={90}
+                                          height={90}
+                                          className="object-cover rounded"
+                                        />
+                                      </Button>
+                                    ))}
+                                  </div>
+
+                                  <div className="mt-6">
+                                    <p className="text-gray-700 mb-3">
+                                      {selectedImage.caption}
+                                    </p>
+                                    <strong>Tag:</strong>{" "}
+                                    {selectedImage?.tags?.map((tag) => (
+                                      <span
+                                        key={tag}
+                                        className="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 mr-2 rounded-md"
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  {/* <div className="flex gap-2">
                                     <div className="relative w-full h-125 mb-4">
                                       {mainImage && mainImage.imageUrl ? (
                                         <>
@@ -496,7 +596,7 @@ export default function Gallery() {
                                         ))}
                                       </div>
                                     </div>
-                                  </div>
+                                  </div> */}
                                 </div>
                               )}
                             </DialogContent>

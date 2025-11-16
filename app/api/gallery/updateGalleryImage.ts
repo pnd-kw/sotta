@@ -43,7 +43,15 @@ export const updateGalleryImage = async (
     formData.append("categories[]", id);
   });
 
-  formData.append("images_data", JSON.stringify(imageDataUpdate.existingImages));
+  // formData.append("images_data", JSON.stringify(imageDataUpdate.existingImages));
+
+  imageDataUpdate.existingImages.forEach((img, index) => {
+    formData.append(`existing_images[${index}][imageUrl]`, img.imageUrl);
+    formData.append(`existing_images[${index}][public_id]`, img.public_id);
+    formData.append(`existing_images[${index}][alt]`, img.alt);
+    formData.append(`existing_images[${index}][mimeType]`, img.mimeType);
+    formData.append(`existing_images[${index}][size]`, String(img.size));
+  })
 
   imageDataUpdate.newImages.forEach((file) => {
     formData.append("images[]", file);

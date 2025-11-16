@@ -12,6 +12,7 @@ import ToastWithProgress from "@/utils/ToastWithProgress";
 import { updateGalleryImage } from "@/app/api/gallery/updateGalleryImage";
 import { useGalleryStore } from "@/store/galleryStore";
 import { getCategories } from "@/app/api/category/getCategories";
+import Image from "next/image";
 
 type Category = {
   id: number;
@@ -20,7 +21,7 @@ type Category = {
   children?: Category[];
 };
 
-type Image = {
+type GalleryImageFile = {
   imageUrl: string;
   public_id: string;
   alt: string;
@@ -41,7 +42,7 @@ type GalleryImage = {
   caption: string;
   tags: string[];
   categories: Category[];
-  images: Image[];
+  images: GalleryImageFile[];
   createdBy: string;
   updatedBy: string;
   created_at: string;
@@ -67,18 +68,21 @@ const galleryFormSchema = (isEditMode: boolean) =>
     images: isEditMode
       ? z
           .array(
-            z.object({
-              imageUrl: z.string(),
-              public_id: z.string(),
-              alt: z.string(),
-              mimeType: z.string(),
-              size: z.number(),
-            })
+            z.union([
+              z.object({
+                imageUrl: z.string(),
+                public_id: z.string(),
+                alt: z.string(),
+                mimeType: z.string(),
+                size: z.number(),
+              }),
+              z.instanceof(File),
+            ])
           )
-          .optional()
+          .min(1, "Minimal harus ada 1 gambar")
       : z
           .array(z.instanceof(File))
-          .refine((files) => files.length > 0, "Gambar wajib diunggah")
+          .refine((files) => files.length >= 1, "Minimal upload 1 gambar")
           .refine(
             (files) => files.every((file) => file.type.startsWith("image/")),
             "Semua file harus berupa gambar"
@@ -99,7 +103,7 @@ const validateImageResolution = (file: File): Promise<boolean> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
           resolve(false);
@@ -133,6 +137,10 @@ export default function GalleryForm({
     resolver: zodResolver(galleryFormSchema(isEditMode)),
     defaultValues: { published: false },
   });
+  const [existingImages, setExistingImages] = useState(
+    initialData?.images || []
+  );
+  const [newImages, setNewImages] = useState<File[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const user = useAuthStore((state) => state.user);
@@ -192,7 +200,15 @@ export default function GalleryForm({
     let files: File[] = [];
 
     if (isEditMode) {
-      const existingImages = data.images as { alt: string; imageUrl: string; public_id:string; mimeType: string; size: number; }[] | undefined;
+      const existingImages = data.images as
+        | {
+            alt: string;
+            imageUrl: string;
+            public_id: string;
+            mimeType: string;
+            size: number;
+          }[]
+        | undefined;
       if (existingImages) {
         console.log("Existing images:", existingImages);
       }
@@ -238,7 +254,7 @@ export default function GalleryForm({
           categories: selectedCategoryIds,
           updatedBy: user?.name || "",
           newImages: files,
-          existingImages: initialData.images || [],
+          existingImages: existingImages,
         };
         await updateGalleryImage(updatePayload, { params: { id: imageId } });
         ToastWithProgress({
@@ -457,28 +473,45 @@ export default function GalleryForm({
           </div>
         )}
         <div>
-          <CustomFileInput
-            label={
-              initialData ? (
-                "Upload new image or just ignore this field"
-              ) : (
-                <>
-                  Upload an image <span className="text-red-500">*</span>
-                </>
-              )
-            }
-            onChange={(e) => {
-              const filesArray = e.target.files
-                ? Array.from(e.target.files)
-                : [];
-              setValue("images", filesArray);
-            }}
-            error={
-              typeof errors.images?.message === "string"
-                ? errors.images.message
-                : undefined
-            }
-          />
+          {!initialData ? (
+            <CustomFileInput
+              label="Upload up to 3 images *"
+              onChange={(files) => {
+                setNewImages(files);
+                setValue("images", files, { shouldValidate: true });
+              }}
+              error={errors.images?.message}
+            />
+          ) : (
+            <div className="flex gap-4">
+              {existingImages.map((img, index) => (
+                <div key={index} className="relative w-24 h-24">
+                  <Image
+                    src={img.imageUrl}
+                    alt={img.alt}
+                    fill
+                    className="object-cover rounded"
+                  />
+
+                  <Button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded"
+                    onClick={() => {
+                      setExistingImages((prev) => {
+                        const newArr = prev.filter((_, idx) => idx !== index);
+                        setValue("images", [...newArr, ...newImages], {
+                          shouldValidate: true,
+                        });
+                        return newArr;
+                      });
+                    }}
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <Controller
           name="published"
