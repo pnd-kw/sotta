@@ -46,37 +46,59 @@ interface PaginatedGalleryResponse {
   total: number;
 }
 
+interface GalleryQueryParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  category_ids?: number[] | string[];
+  published?: boolean;
+}
+
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
 export const getGalleryImages = async ({
   page = 1,
   per_page = 8,
   search = "",
-}: {
-  page?: number;
-  per_page?: number;
-  search?: string;
-} = {}): Promise<PaginatedGalleryResponse> => {
+  category_ids,
+  published,
+}: GalleryQueryParams = {}): Promise<PaginatedGalleryResponse> => {
   try {
+    const params: Record<string, string | number | boolean> = {
+      page,
+      per_page,
+    };
+
+    if (search.trim() !== "") {
+      params.search = search;
+    }
+
+    if (category_ids && category_ids.length > 0) {
+      params.category_ids = category_ids.join(",");
+    }
+
+    if (published !== undefined) {
+      params.published = published ? "true" : "false";
+    }
+
     const response = await axiosInstance.get<PaginatedGalleryResponse>(
       "/api/gallery",
       {
-        params: {
-          page,
-          per_page,
-          search,
-        },
+        params,
       }
     );
 
     return response.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    if (error.response) {
-      const errorMessage =
-        error.response.data?.message || "Get gallery images failed";
-      throw new Error(errorMessage);
-    } else {
-      throw new Error("Network error");
-    }
+  } catch (error) {
+    const err = error as AxiosErrorResponse;
+    const msg = err.response?.data?.message ?? "Get gallery images failed";
+    throw new Error(msg);
   }
 };
 
@@ -85,12 +107,7 @@ export const getPublishedGalleryImages = async ({
   per_page = 8,
   search = "",
   published = true,
-}: {
-  page?: number;
-  per_page?: number;
-  search?: string;
-  published?: boolean;
-} = {}): Promise<PaginatedGalleryResponse> => {
+}: GalleryQueryParams = {}): Promise<PaginatedGalleryResponse> => {
   try {
     const response = await axiosInstance.get<PaginatedGalleryResponse>(
       "/api/gallery",
@@ -105,15 +122,10 @@ export const getPublishedGalleryImages = async ({
     );
 
     return response.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    if (error.response) {
-      const errorMessage =
-        error.response.data?.message || "Get gallery images failed";
-      throw new Error(errorMessage);
-    } else {
-      throw new Error("Network error");
-    }
+  } catch (error) {
+    const err = error as AxiosErrorResponse;
+    const msg = err.response?.data?.message ?? "Get gallery images failed";
+    throw new Error(msg);
   }
 };
 
@@ -124,14 +136,9 @@ export const getGalleryByUrl = async (
     const response = await axios.get<PaginatedGalleryResponse>(url);
 
     return response.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    if (error.response) {
-      const errorMessage =
-        error.response.data?.message || "Get gallery next page failed";
-      throw new Error(errorMessage);
-    } else {
-      throw new Error("Network error");
-    }
+  } catch (error) {
+    const err = error as AxiosErrorResponse;
+    const msg = err.response?.data?.message ?? "Get gallery next page failed";
+    throw new Error(msg);
   }
 };
