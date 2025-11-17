@@ -372,13 +372,18 @@ export default function Gallery() {
               </span>
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 max-w-screen-xl mx-auto mb-4">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2 max-w-screen-xl mx-auto mb-4">
               {galleryImages.map((item) => (
-                <Card key={item.id}>
+                <Card key={item.id} className="relative">
                   <CardHeader>
                     <CardTitle>{item.name}</CardTitle>
                     <CardDescription>
-                      <p>
+                      {item?.categories?.map((category) => (
+                        <div key={category.id} className="text-xs bg-[#996515] px-2 py-1 rounded-sm text-white inline-block mr-1 my-1" style={{ fontSize: 10 }}>
+                          {category.name}
+                        </div>
+                      ))}
+                      {/* <p>
                         <strong>Dibuat:</strong>{" "}
                         {format(new Date(item.created_at), "dd MMMM yyyy")}
                       </p>
@@ -391,10 +396,10 @@ export default function Gallery() {
                       </p>
                       <p>
                         <strong>Diperbarui oleh:</strong> {item.updatedBy}
-                      </p>
+                      </p> */}
                     </CardDescription>
                     <CardAction>
-                      <div className="absolute inset-0 flex justify-end py-2 px-2 space-x-2">
+                      <div className="absolute inset-0 flex items-end py-2 px-2 space-x-2">
                         {!item.published && (
                           <Dialog
                             open={isPublishDialogOpen}
@@ -438,154 +443,126 @@ export default function Gallery() {
                               </div>
 
                               {selectedImage && (
-                                <div className="max-w-[80vw] mx-auto p-4">
-                                  <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">
-                                    {selectedImage.name}
-                                  </h1>
+                                <div className="grid grid-cols-[8fr_2fr] w-full mx-auto p-4">
+                                  <div className="flex flex-col items-center justify-center">
+                                    <h1 className="text-2xl font-semibold mb-4 capitalize font-mono">
+                                      {selectedImage.name}
+                                    </h1>
 
-                                  <div className="relative w-full h-[60vh] bg-black/5 rounded-lg flex items-center justify-center overflow-hidden">
-                                    {selectedImage.images.length > 1 && (
-                                      <Button
-                                        type="button"
-                                        onClick={() => {
-                                          const currentIndex =
-                                            selectedImage.images.findIndex(
-                                              (x) =>
-                                                x.imageUrl ===
-                                                mainImage?.imageUrl
+                                    <div className="relative w-[80%] h-[60vh] rounded-lg flex items-center justify-center overflow-hidden">
+                                      {selectedImage.images.length > 1 && (
+                                        <Button
+                                          type="button"
+                                          onClick={() => {
+                                            const currentIndex =
+                                              selectedImage.images.findIndex(
+                                                (x) =>
+                                                  x.imageUrl ===
+                                                  mainImage?.imageUrl
+                                              );
+                                            const prevIndex =
+                                              currentIndex === 0
+                                                ? selectedImage.images.length -
+                                                  1
+                                                : currentIndex - 1;
+                                            setMainImage(
+                                              selectedImage.images[prevIndex]
                                             );
-                                          const prevIndex =
-                                            currentIndex === 0
-                                              ? selectedImage.images.length - 1
-                                              : currentIndex - 1;
-                                          setMainImage(
-                                            selectedImage.images[prevIndex]
-                                          );
-                                        }}
-                                        className="absolute left-3 p-2 bg-white/70 rounded-full shadow hover:bg-white"
-                                      >
-                                        <ChevronLeft size={28} />
-                                      </Button>
-                                    )}
+                                          }}
+                                          className="w-9 left-3 p-2 rounded-full hover:bg-stone-800"
+                                        >
+                                          <ChevronLeft size={28} />
+                                        </Button>
+                                      )}
 
-                                    <div className="relative w-full h-full">
-                                      <Image
-                                        src={mainImage?.imageUrl ?? ""}
-                                        alt={mainImage?.alt ?? "image"}
-                                        fill
-                                        className="object-contain rounded"
-                                      />
-                                    </div>
-
-                                    {selectedImage.images.length > 1 && (
-                                      <Button
-                                        type="button"
-                                        onClick={() => {
-                                          const currentIndex =
-                                            selectedImage.images.findIndex(
-                                              (x) =>
-                                                x.imageUrl ===
-                                                mainImage?.imageUrl
-                                            );
-                                          const nextIndex =
-                                            currentIndex ===
-                                            selectedImage.images.length - 1
-                                              ? 0
-                                              : currentIndex + 1;
-
-                                          setMainImage(
-                                            selectedImage.images[nextIndex]
-                                          );
-                                        }}
-                                        className="absolute right-3 p-2 bg-white/70 rounded-full shadow hover:bg-white"
-                                      >
-                                        <ChevronRight size={28} />
-                                      </Button>
-                                    )}
-                                  </div>
-
-                                  <div className="flex justify-center gap-3 mt-4">
-                                    {selectedImage.images.map((img, index) => (
-                                      <Button
-                                        type="button"
-                                        key={index}
-                                        onClick={() => setMainImage(img)}
-                                        className={`border-2 rounded-md p-1 ${
-                                          mainImage?.imageUrl === img.imageUrl
-                                            ? "border-blue-500"
-                                            : "border-transparent"
-                                        }`}
-                                      >
+                                      <div className="relative w-full h-full">
                                         <Image
-                                          src={img.imageUrl}
-                                          alt={img.alt}
-                                          width={90}
-                                          height={90}
-                                          className="object-cover rounded"
+                                          src={mainImage?.imageUrl ?? ""}
+                                          alt={mainImage?.alt ?? "image"}
+                                          fill
+                                          className="object-contain rounded"
                                         />
-                                      </Button>
-                                    ))}
-                                  </div>
+                                      </div>
 
-                                  <div className="mt-6">
-                                    <p className="text-gray-700 mb-3">
-                                      {selectedImage.caption}
-                                    </p>
-                                    <strong>Tag:</strong>{" "}
-                                    {selectedImage?.tags?.map((tag) => (
-                                      <span
-                                        key={tag}
-                                        className="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 mr-2 rounded-md"
-                                      >
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
+                                      {selectedImage.images.length > 1 && (
+                                        <Button
+                                          type="button"
+                                          onClick={() => {
+                                            const currentIndex =
+                                              selectedImage.images.findIndex(
+                                                (x) =>
+                                                  x.imageUrl ===
+                                                  mainImage?.imageUrl
+                                              );
+                                            const nextIndex =
+                                              currentIndex ===
+                                              selectedImage.images.length - 1
+                                                ? 0
+                                                : currentIndex + 1;
 
-                                  {/* <div className="flex gap-2">
-                                    <div className="relative w-full h-125 mb-4">
-                                      {mainImage && mainImage.imageUrl ? (
-                                        <>
-                                          <Image
-                                            src={mainImage.imageUrl}
-                                            alt={mainImage.alt}
-                                            fill
-                                            className="object-contain rounded"
-                                          />
-                                          <div className="flex mt-4 space-x-2">
-                                            {selectedImage.images.map(
-                                              (img, index) => (
-                                                <div
-                                                  key={index}
-                                                  className="cursor-pointer"
-                                                  onClick={() =>
-                                                    setMainImage(img)
-                                                  }
-                                                >
-                                                  <Image
-                                                    src={img.imageUrl}
-                                                    alt={img.alt}
-                                                    width={100}
-                                                    height={100}
-                                                    className="object-cover"
-                                                  />
-                                                </div>
-                                              )
-                                            )}
-                                          </div>
-                                        </>
-                                      ) : (
-                                        <div>Failed to load image.</div>
+                                            setMainImage(
+                                              selectedImage.images[nextIndex]
+                                            );
+                                          }}
+                                          className="w-9 right-3 p-2 rounded-full hover:bg-stone-500"
+                                        >
+                                          <ChevronRight size={28} />
+                                        </Button>
                                       )}
                                     </div>
 
+                                    <div className="flex justify-center gap-3 mt-4">
+                                      {selectedImage.images.map(
+                                        (img, index) => (
+                                          <Button
+                                            type="button"
+                                            key={index}
+                                            onClick={() => setMainImage(img)}
+                                            className={`relative bg-transparent hover:bg-transparent overflow-hidden ${
+                                              mainImage?.imageUrl ===
+                                              img.imageUrl
+                                                ? "w-24 h-16"
+                                                : "w-16 h-16"
+                                            }`}
+                                          >
+                                            <Image
+                                              src={img.imageUrl}
+                                              alt={img.alt}
+                                              fill
+                                              className="object-contain"
+                                            />
+                                          </Button>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col">
                                     <div className="flex flex-col">
                                       <p className="text-gray-700 mb-2">
                                         {selectedImage.caption}
                                       </p>
 
                                       <div className="mt-4">
-                                        <strong>Tag:</strong>{" "}
+                                        <strong className="text-sm">
+                                          Kategori Produk:
+                                        </strong>
+                                        <br />
+                                        {selectedImage?.categories?.map(
+                                          (category) => (
+                                            <span
+                                              key={category.id}
+                                              className="inline-block text-white text-xs px-2 py-1 mr-2 rounded-md bg-[#996515]"
+                                            >
+                                              {category.name}
+                                            </span>
+                                          )
+                                        )}
+                                      </div>
+
+                                      <div className="mt-4">
+                                        <strong className="text-sm">
+                                          Tag:
+                                        </strong>{" "}
                                         {selectedImage?.tags?.map((tag) => (
                                           <span
                                             key={tag}
@@ -596,7 +573,7 @@ export default function Gallery() {
                                         ))}
                                       </div>
                                     </div>
-                                  </div> */}
+                                  </div>
                                 </div>
                               )}
                             </DialogContent>
@@ -607,6 +584,7 @@ export default function Gallery() {
                           onClick={() => {
                             handleEdit(item.id);
                           }}
+                          className="border border-stone-200"
                         >
                           <MdEdit />
                         </Button>
@@ -614,25 +592,43 @@ export default function Gallery() {
                           variant="whiteRedText"
                           disabled={user?.role_name !== "superadmin"}
                           onClick={() => handleGetTargetImage(item.id)}
+                          className="border border-stone-200"
                         >
                           <MdDelete />
                         </Button>
                       </div>
                     </CardAction>
-                    <CardContent>
+                    <CardContent className="p-0">
                       <Image
                         src={item.thumbnailUrl}
                         alt={item.images[0].alt}
                         width={300}
                         height={300}
-                        className="object-cover w-full h-full"
+                        className="object-cover w-full h-full mb-1 rounded-sm shadow-lg"
                       />
 
+                      <div className="mb-8" style={{ fontSize: 10 }}>
+                        <p>
+                          <strong>Dibuat:</strong>{" "}
+                          {format(new Date(item.created_at), "dd MMMM yyyy")}
+                        </p>
+                        <p>
+                          <strong>Diperbarui:</strong>{" "}
+                          {format(new Date(item.updated_at), "dd MMMM yyyy")}
+                        </p>
+                        <p>
+                          <strong>Dibuat oleh:</strong> {item.createdBy}
+                        </p>
+                        <p>
+                          <strong>Diperbarui oleh:</strong> {item.updatedBy}
+                        </p>
+                      </div>
+
                       <div
-                        className={`absolute bottom-1 right-1 px-4 py-2 rounded-md text-xs font-bold ${
+                        className={`absolute bottom-1 right-1 px-4 py-2 mb-1 rounded-md text-xs font-bold ${
                           item.published
                             ? "bg-green-600 text-white"
-                            : "bg-gray-100"
+                            : "bg-gray-100 border border-stone-200"
                         }`}
                       >
                         {item.published ? "Published" : "Draft"}
