@@ -383,20 +383,6 @@ export default function Gallery() {
                           {category.name}
                         </div>
                       ))}
-                      {/* <p>
-                        <strong>Dibuat:</strong>{" "}
-                        {format(new Date(item.created_at), "dd MMMM yyyy")}
-                      </p>
-                      <p>
-                        <strong>Diperbarui:</strong>{" "}
-                        {format(new Date(item.updated_at), "dd MMMM yyyy")}
-                      </p>
-                      <p>
-                        <strong>Dibuat oleh:</strong> {item.createdBy}
-                      </p>
-                      <p>
-                        <strong>Diperbarui oleh:</strong> {item.updatedBy}
-                      </p> */}
                     </CardDescription>
                     <CardAction>
                       <div className="absolute inset-0 flex items-end py-2 px-2 space-x-2">
@@ -518,11 +504,11 @@ export default function Gallery() {
                                             type="button"
                                             key={index}
                                             onClick={() => setMainImage(img)}
-                                            className={`relative bg-transparent hover:bg-transparent overflow-hidden ${
+                                            className={`relative bg-transparent hover:bg-transparent overflow-hidden transition-all duration-300 ${
                                               mainImage?.imageUrl ===
                                               img.imageUrl
                                                 ? "w-24 h-16"
-                                                : "w-16 h-16"
+                                                : "w-16 h-12"
                                             }`}
                                           >
                                             <Image

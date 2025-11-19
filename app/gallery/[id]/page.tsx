@@ -67,6 +67,13 @@
 //   }
 // }
 
-export default function GalleryDetailPage() {
-  return <div>Under construction</div>;
+import GalleryDetailContent from "@/app/components/GalleryDetailContent";
+
+export default async function GalleryDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <GalleryDetailContent id={id} />;
 }
